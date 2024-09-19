@@ -1,0 +1,20 @@
+server:
+  port: 8001
+
+spring:
+  application:
+    name: ali-user
+  profiles:
+    active:
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8000
+        file-extension: yaml
+        group: DEFAULT_GROUP
+        extension-configs:
+          # 公共配置
+          - dataId: ali-common.${spring.cloud.nacos.config.file-extension}
+            refresh: true
+      discovery:
+        server-addr: 127.0.0.1:8000

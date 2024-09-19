@@ -1,0 +1,16 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: ali-gateway
+  profiles:
+    active:
+  cloud:
+    nacos:
+      config:
+        server-addr: 127.0.0.1:8000
+        file-extension: yaml
+        group: DEFAULT_GROUP
+      discovery:
+        server-addr: 127.0.0.1:8000

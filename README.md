@@ -1,0 +1,296 @@
+# spring-cloud-ali
+
+[TOC]
+
+> 此项目作为Spring Cloud Alibaba的脚手架工程，便于学习和复现一些系统问题。
+
+## 一、版本管理
+
+### 1.1 框架版本
+
++ 统一框架版本，可以[参考该链接](https://github.com/alibaba/spring-cloud-alibaba/wiki/%E7%89%88%E6%9C%AC%E8%AF%B4%E6%98%8E)，切勿单独设置：
+
+  ```xml
+  <!-- 顶级pom.xml -->
+  
+  <!-- spring boot -->
+  <parent>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-parent</artifactId>
+      <version>2.6.13</version>
+      <relativePath/>
+  </parent>
+  
+  <dependencyManagement>
+  	<dependencies>
+          <!-- spring cloud -->
+          <dependency>
+              <groupId>org.springframework.cloud</groupId>
+              <artifactId>spring-cloud-dependencies</artifactId>
+              <version>2021.0.5</version>
+              <type>pom</type>
+              <scope>import</scope>
+          </dependency>
+          <!-- spring cloud alibaba -->
+          <dependency>
+              <groupId>com.alibaba.cloud</groupId>
+              <artifactId>spring-cloud-alibaba-dependencies</artifactId>
+              <version>2021.0.6.0</version>
+              <type>pom</type>
+              <scope>import</scope>
+          </dependency>
+  	</dependencies>
+  </dependencyManagement>
+  ```
+
+### 1.2 依赖包版本
+
+1. 所有依赖包及版本定义，均放在`pom.xml`中的`dependencyManagement`中，模块直接引入，如：
+
+   ```xml
+   <dependencyManagement>
+   	<dependencies>
+           <!-- 数据库相关（MySQL) -->
+           <dependency>
+               <groupId>mysql</groupId>
+               <artifactId>mysql-connector-java</artifactId>
+               <version>8.0.33</version>
+           </dependency>
+           <dependency>
+               <groupId>com.alibaba</groupId>
+               <artifactId>druid-spring-boot-starter</artifactId>
+               <version>1.2.8</version>
+           </dependency>
+           <dependency>
+               <groupId>com.baomidou</groupId>
+               <artifactId>mybatis-plus-boot-starter</artifactId>
+               <version>3.4.3.4</version>
+           </dependency>
+           ...
+       </dependencies>
+   </dependencyManagement>
+   ```
+
+2. 所有模块强依赖的包，放在`dependencies`中，如：
+
+   ```xml
+   <!-- 所有module都需要强依赖的包 --> 
+   <dependencies>
+       <dependency>
+           <groupId>org.projectlombok</groupId>
+           <artifactId>lombok</artifactId>
+           <version>1.18.26</version>
+       </dependency>
+   </dependencies>
+   ```
+
+3. 引入依赖包前，先确认**框架版本**里，是否已经有**对应的依赖包**定义，有则直接在模块中引入，没有则自行引入
+
+4. 自行引入的依赖包，最好提前确认是否可以引入，是否存在间接依赖包冲突等
+
+## 二、模块划分
+
+|     模块名称      |                           模块用途                           |                             备注                             |
+| :---------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
+|  **ali-common**   | 公共模块，大部分业务模块需要依赖，<br />主要包含一些常用工具、组件等 | 该模块中添加依赖包时，<br />通常会定义`provided`<br />确保不会造成强依赖 |
+|  **ali-gateway**  |       网关模块，提供路由、流控、<br />熔断、鉴权等能力       |      该模块用于治理出入口流量，<br />不负责具体业务逻辑      |
+| **ali-user-api**  |           用户服务API<br />提供用户HTTP/RPC接口等            |  调用方可直接引用<br />依赖包通常很少<br />尽量为`provided`  |
+|   **ali-user**    |          用户服务实现<br />对api模块的业务逻辑实现           |                        调用方不能引用                        |
+| **ali-order-api** |           订单服务API<br />提供用户HTTP/RPC接口等            |  调用方可直接引用<br />依赖包通常很少<br />尽量为`provided`  |
+|   **ali-order**   |          订单服务实现<br />对api模块的业务逻辑实现           |                        调用方不能引用                        |
+
+## 三、配置管理
+
+### 3.1 本地配置
+
+> 本地配置(bootstrap.xml)，仅包含少量基础配置，其余配置均放在配置中心。
+
+```yaml
+server:
+  port: 8002
+
+spring:
+  application:
+    name: ali-order
+  profiles:
+    active:
+  cloud:
+    nacos:  # 使用nacos作为配置和服务注册中心
+      config:
+        server-addr: 127.0.0.1:8000
+        file-extension: yaml
+        group: DEFAULT_GROUP
+        extension-configs:
+          - dataId: ali-common.${spring.cloud.nacos.config.file-extension}
+            refresh: true
+      discovery: 
+        server-addr: 127.0.0.1:8000
+```
+
+### 3.2 配置中心（Nacos）
+
+> 配置中心通常包含两部分：通用配置(ali-common.yaml)和应用配置(ali-user.yaml, ali-order.yaml, ...)。
+
+#### 通用配置
+
+#### 应用配置
+
+#### 配置监听
+
+
+
+## 四、服务治理
+
+### 4.1 安全认证
+
+
+
+### 4.2 服务鉴权
+
+
+
+### 4.3 异常规范
+
+
+
+### 4.4 日志规范
+
+
+
+### 4.5 流控规范
+
+> 1. **网关流控**：针对外网流量作入口流控（尽量将限流控制在最外层），属于必要流控；
+> 2. **服务流控**：针对单一服务对外流控，包含了来自网关和内部服务的流量，属于兜底流控（必须）；
+> 3. **流控实现**：采用Sentinel和Nacos（持久化），网关和服务流控采用隔离配置（不同文件），实际情况也考虑使用统一文件；
+> 4. 这里的流控，更多是指**被调用方自限流**，也可作**他限流**（调用方主动流控）；
+> 5. 若需要在Sentinel控制台修改规则并生效，需改动控制台代码，将规则更新请求，转发至Nacos(publishConfig)，而不是应用客户端Transport端口）
+
+#### 网关流控
+
+> 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现：
+
++ `GatewaySentinelFilter`类配置：
+
+  ```JAVA
+  /**
+   * 存放sentinel规则的命名空间（id）
+   */
+  @Value("${spring.cloud.sentinel.filter.namespace}")
+  private String sentinelNamespace;
+  ```
+
++ 流控规则文件配置：
+
+  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_flow_rules.png)
+
+1. `_sentinel_`：存放sentinel规则的配置命名空间
+
+2. `ali-gateway`：使用网关应用名称，作为配置分组
+
+3. `flow-rules-ali-user`：微服务应用`ali-user`（与route.id一致）的流控规则配置：
+
+   ```json
+   [
+       {
+           "resource": "GET#/users/detail", // METHOD#URI
+           "limitApp": "default",
+           "grade": 1,
+           "count": 3,
+           "strategy": 0,
+           "controlBehavior": 0,
+           "clusterMode": false
+       },
+       {
+           "resource": "GET#/users/{userId}",
+           "limitApp": "default",
+           "grade": 1,
+           "count": 1,
+           "strategy": 0,
+           "controlBehavior": 0,
+           "clusterMode": false
+       }
+   ]
+   ```
+
+#### 服务流控
+
+> 服务流控，作为服务**兜底流控**，应进行策略配置，结合**Spring MVC Interceptor**、**Sentinel**和**Nacos**实现限流拦截器，可参考[ServiceSentinelInterceptor类](./spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/ServiceSentinelInterceptor.java)实现：
+
++ `ServiceSentinelInterceptor`类配置：
+
+  ```JAVA
+  /**
+   * 存放sentinel规则的命名空间（id）
+   */
+  @Value("${spring.cloud.sentinel.filter.namespace}")
+  private String sentinelNamespace;
+  ```
+
++ 流控规则配置文件：
+
+  ![](./screenshot/service_flow_rules.png)
+
+  1. `_sentinel_`：存放sentinel规则的配置命名空间
+
+  2. `ali-user`：使用微服务应用名称，作为配置分组
+
+  3. `flow-rules.json`：微服务应用流控规则配置：
+
+     ```json
+     [
+         {
+             "resource": "GET#/users/detail", // METHOD#URI
+             "limitApp": "default",
+             "grade": 1,
+             "count": 3,
+             "strategy": 0,
+             "controlBehavior": 0,
+             "clusterMode": false
+         },
+         {
+             "resource": "GET#/users/{userId}",
+             "limitApp": "default",
+             "grade": 1,
+             "count": 1,
+             "strategy": 0,
+             "controlBehavior": 0,
+             "clusterMode": false
+         }
+     ]
+     ```
+
+### 4.6 降级规范
+
+> 降级主要针对应用外部调用场景，当外部服务持续不可用时，应作及时熔断降级，降低雪崩风险。场景主要包含**网关调用内部服务**、**内部服务间调用**、**中间件调用**、**第三方调用**等
+
+#### 网关调用内部服务
+
+
+
+#### 内部服务间调用
+
+
+
+#### 中间件调用
+
+
+
+#### 第三方调用
+
+### 4.7 监控报警
+
+
+
+### 4.8 系统压测
+
+
+
+### 4.9 系统诊断
+
+
+
+## 五、开发规范
+
+
+
+## 六、运维部署
