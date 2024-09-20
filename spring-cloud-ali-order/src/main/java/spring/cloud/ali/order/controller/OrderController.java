@@ -20,7 +20,7 @@ public class OrderController {
     @GetMapping(value = "/detail")
     public HttpResult<OrderDetailResult> queryOrderDetail(
             @RequestParam String userName, @RequestParam String orderNo) throws InterruptedException {
-        // Thread.sleep(1000000);
+        Thread.sleep(1000000);
         return HttpResult.success(orderService.queryUserOrder(userName, orderNo));
     }
 }

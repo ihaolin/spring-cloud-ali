@@ -6,33 +6,23 @@ import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
-import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
-import com.alibaba.nacos.api.config.listener.AbstractListener;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
-import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-import org.springframework.http.server.PathContainer;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.pattern.PathPattern;
-import org.springframework.web.util.pattern.PathPatternParser;
 import spring.cloud.ali.common.component.SentinelConfigService;
-import spring.cloud.ali.common.util.JsonUtil;
+import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY;
@@ -44,29 +34,10 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY
 @Slf4j
 public class ServiceSentinelInterceptor implements HandlerInterceptor {
 
-    /**
-     * 请求路径解析器
-     */
-    private static final PathPatternParser PATH_PARSER = new PathPatternParser();
-
-    /**
-     * 流控规则文件
-     */
     private static final String FLOW_RULES = "flow-rules.json";
 
-    /**
-     * 资源
-     */
     private static final String RESOURCE_SPLITTER = "#";
 
-    /**
-     * 流控规则更新锁
-     */
-    private final Lock flowRulesRefreshLock = new ReentrantLock();
-
-    /**
-     * 应用名称
-     */
     @Value("${spring.application.name}")
     private String appName;
 
@@ -74,90 +45,21 @@ public class ServiceSentinelInterceptor implements HandlerInterceptor {
     private SentinelConfigService sentinelConfigService;
 
     /**
-     * 流控规则映射<resource, 流控规则>
+     * 用于路径资源匹配
      */
     private volatile Map<String, FlowRule> flowRuleMap;
 
     @EventListener
     public void onApplicationReady(ApplicationReadyEvent event) {
         try {
-            initAppRules();
+            sentinelConfigService.initFlowRules(FLOW_RULES, appName, new SentinelConfigService.RuleListener<FlowRule>() {
+                @Override
+                public void postRefresh(List<FlowRule> refreshed) {
+                    flowRuleMap = refreshed.stream().collect(Collectors.toMap(FlowRule::getResource, f -> f));
+                }
+            });
         } catch (NacosException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private void initAppRules() throws NacosException {
-
-        // 初始化流控规则
-        String flowRules = sentinelConfigService.get().getConfig(FLOW_RULES, appName, 5000);
-        doRefreshAppFlowRules(flowRules);
-
-        // 监听流控规则变化
-        sentinelConfigService.get().addListener(FLOW_RULES, appName, new AbstractListener() {
-            @Override
-            public void receiveConfigInfo(String rules) {
-                doRefreshAppFlowRules(rules);
-            }
-        });
-    }
-
-    /**
-     * 更新应用的流控规则
-     * @param rules 最新的规则（json列表）
-     */
-    private void doRefreshAppFlowRules(String rules) {
-        flowRulesRefreshLock.lock();
-        try {
-
-            if (Strings.isNullOrEmpty(rules)){
-                rules = "[]";
-            }
-
-            // 应用最新的限流规则
-            List<FlowRule> latestRules =
-                    JsonUtil.toList(rules, new TypeReference<List<FlowRule>>() {});
-            Map<String, FlowRule> latestRulesMap = latestRules.stream().collect(Collectors.toMap(FlowRule::getResource, f -> f));
-
-            // 应用当前的限流规则
-            List<FlowRule> currentRules = FlowRuleManager.getRules();
-            Map<String, FlowRule> currentRulesMap = currentRules.stream().collect(Collectors.toMap(FlowRule::getResource, f -> f));
-
-            // 新增的规则
-            Set<String> addedRuleIds = new HashSet<>(latestRulesMap.keySet());
-            addedRuleIds.removeAll(currentRulesMap.keySet());
-
-            // 删除的规则
-            Set<String> removedRuleIds = new HashSet<>(currentRulesMap.keySet());
-            removedRuleIds.removeAll(latestRulesMap.keySet());
-
-            // 删除不存在的，替换存在的
-            ListIterator<FlowRule> iterator = currentRules.listIterator();
-            while (iterator.hasNext()) {
-                FlowRule currentRule = iterator.next();
-                if(removedRuleIds.contains(currentRule.getResource())){
-                    // 删除无效的规则
-                    iterator.remove();
-                    continue;
-                }
-                // 替换存在的规则
-                FlowRule latestRule = latestRulesMap.get(currentRule.getResource());
-                if (latestRule != null){
-                    iterator.set(latestRule);
-                }
-            }
-
-            // 添加新规则
-            for(String addedRuleId : addedRuleIds){
-                currentRules.add(latestRulesMap.get(addedRuleId));
-            }
-
-            // 更新流控规则
-            FlowRuleManager.loadRules(currentRules);
-            flowRuleMap = currentRules.stream().collect(Collectors.toMap(FlowRule::getResource, f -> f));
-
-        } finally {
-            flowRulesRefreshLock.unlock();
         }
     }
 
@@ -203,8 +105,7 @@ public class ServiceSentinelInterceptor implements HandlerInterceptor {
         for (String flowResource : flowRuleMap.keySet()){
             if (flowResource.contains("{")){
                 PathPattern.PathMatchInfo matched =
-                        PATH_PARSER.parse(flowResource.replace(resourcePrefix, ""))
-                                .matchAndExtract(PathContainer.parsePath(request.getRequestURI()));
+                        WebUtil.matchUri(flowResource.replace(resourcePrefix, ""), request.getRequestURI());
                 if (matched != null){
                     // 匹配到了
                     return flowResource;

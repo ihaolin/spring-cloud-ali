@@ -22,7 +22,7 @@ public class UserController {
     @SentinelResource("queryUserByName")
     @GetMapping(value = "/detail")
     public HttpResult<UserDetailResult> queryUserByName(@RequestParam String userName) throws InterruptedException {
-        Thread.sleep(10000000);
+        // Thread.sleep(10000000);
         return HttpResult.success(userService.queryUserByName(userName));
     }
 

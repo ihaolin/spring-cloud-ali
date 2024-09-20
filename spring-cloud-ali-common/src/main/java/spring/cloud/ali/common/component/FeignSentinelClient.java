@@ -12,8 +12,8 @@ import feign.Request;
 import feign.RequestTemplate;
 import feign.Response;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.util.pattern.PathPatternParser;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.exception.BizException;
@@ -21,6 +21,7 @@ import spring.cloud.ali.common.exception.ServiceException;
 import spring.cloud.ali.common.exception.SystemException;
 import spring.cloud.ali.common.util.JsonUtil;
 
+import javax.annotation.Resource;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -35,30 +36,17 @@ public class FeignSentinelClient implements Client {
 
     private static final String SERVER_INTERNAL_ERROR = JsonUtil.toJson(HttpResult.fail(BizException.SERVER_INTERNAL_ERROR));
 
-    /**
-     * 请求路径解析器
-     */
-    private static final PathPatternParser PATH_PARSER = new PathPatternParser();
-
-    /**
-     * 降级规则文件
-     */
     private static final String DEGRADE_RULES = "degrade-rules-feign.json";
 
-    /**
-     * 资源前缀（用于隔离其他类资源，如mysql，redis等）
-     */
     private static final String RESOURCE_PREFIX = "feign";
 
-    /**
-     * 资源间隔符号
-     */
     private static final String RESOURCE_SPLITTER = "#";
 
-    /**
-     * 降级规则更新锁
-     */
-    private final Lock degradeRulesRefreshLock = new ReentrantLock();
+    @Value("${spring.application.name}")
+    private String appName;
+
+    @Resource
+    private SentinelConfigService sentinelConfigService;
 
     private final Client delegate;
 
@@ -89,11 +77,12 @@ public class FeignSentinelClient implements Client {
                                 reqMethod + RESOURCE_SPLITTER + reqUri;
 
         Entry sentinelEntry = null;
-        Response response = null;
+        Response response;
         try {
             sentinelEntry = SphU.entry(resource);
             response = delegate.execute(request, options);
             if (Objects.equals(HttpStatus.OK.value(), response.status())){
+                // TODO 检查业务结果？
                 return response;
             }
 
