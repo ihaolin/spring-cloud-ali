@@ -1,11 +1,10 @@
 
-package spring.cloud.ali.order.config;
+package spring.cloud.ali.user.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestTemplate;
 import spring.cloud.ali.common.component.SentinelConfigService;
-import spring.cloud.ali.common.config.FeignClientConfig;
 
 @Configuration
 public class ComponentConfig {
@@ -18,10 +17,5 @@ public class ComponentConfig {
     @Bean
     public SentinelConfigService sentinelConfigService(){
         return new SentinelConfigService();
-    }
-
-    @Bean
-    public FeignClientConfig feignClientConfig(){
-        return new FeignClientConfig();
     }
 }

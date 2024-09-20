@@ -7,8 +7,6 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
-import com.alibaba.nacos.api.config.ConfigFactory;
-import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.config.listener.AbstractListener;
 import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
@@ -18,12 +16,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.http.server.PathContainer;
-import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
+import spring.cloud.ali.common.component.SentinelConfigService;
 import spring.cloud.ali.common.util.JsonUtil;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -31,7 +30,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -44,7 +42,6 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY
  * TODO 增加默认限流策略
  */
 @Slf4j
-@Component
 public class ServiceSentinelInterceptor implements HandlerInterceptor {
 
     /**
@@ -73,22 +70,8 @@ public class ServiceSentinelInterceptor implements HandlerInterceptor {
     @Value("${spring.application.name}")
     private String appName;
 
-    /**
-     * nacos配置中心地址
-     */
-    @Value("${spring.cloud.nacos.config.server-addr}")
-    private String nacosServer;
-
-    /**
-     * nacos中，存放sentinel规则的命名空间
-     */
-    @Value("${spring.cloud.sentinel.interceptor.namespace}")
-    private String sentinelNamespace;
-
-    /**
-     * 用于监听应用规则文件
-     */
-    private ConfigService configService;
+    @Resource
+    private SentinelConfigService sentinelConfigService;
 
     /**
      * 流控规则映射<resource, 流控规则>
@@ -98,20 +81,7 @@ public class ServiceSentinelInterceptor implements HandlerInterceptor {
     @EventListener
     public void onApplicationReady(ApplicationReadyEvent event) {
         try {
-            initConfigService();
             initAppRules();
-        } catch (NacosException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void initConfigService() {
-        Properties properties = new Properties();
-        properties.setProperty("serverAddr", nacosServer);
-        properties.setProperty("namespace", sentinelNamespace);
-
-        try {
-            configService = ConfigFactory.createConfigService(properties);
         } catch (NacosException e) {
             throw new RuntimeException(e);
         }
@@ -120,11 +90,11 @@ public class ServiceSentinelInterceptor implements HandlerInterceptor {
     private void initAppRules() throws NacosException {
 
         // 初始化流控规则
-        String flowRules = configService.getConfig(FLOW_RULES, appName, 5000);
+        String flowRules = sentinelConfigService.get().getConfig(FLOW_RULES, appName, 5000);
         doRefreshAppFlowRules(flowRules);
 
         // 监听流控规则变化
-        configService.addListener(FLOW_RULES, appName, new AbstractListener() {
+        sentinelConfigService.get().addListener(FLOW_RULES, appName, new AbstractListener() {
             @Override
             public void receiveConfigInfo(String rules) {
                 doRefreshAppFlowRules(rules);

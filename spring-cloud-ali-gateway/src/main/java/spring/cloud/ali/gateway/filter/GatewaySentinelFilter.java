@@ -1,7 +1,6 @@
 package spring.cloud.ali.gateway.filter;
 
 import com.alibaba.csp.sentinel.Entry;
-import com.alibaba.csp.sentinel.EntryType;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.context.Context;
@@ -12,8 +11,6 @@ import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRuleManager;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
-import com.alibaba.nacos.api.config.ConfigFactory;
-import com.alibaba.nacos.api.config.ConfigService;
 import com.alibaba.nacos.api.config.listener.AbstractListener;
 import com.alibaba.nacos.api.config.listener.Listener;
 import com.alibaba.nacos.api.exception.NacosException;
@@ -44,6 +41,7 @@ import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 import reactor.core.publisher.Mono;
+import spring.cloud.ali.common.component.SentinelConfigService;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.util.JsonUtil;
 import spring.cloud.ali.gateway.config.SpringCloudGatewayConfig;
@@ -55,7 +53,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -124,25 +121,11 @@ public class GatewaySentinelFilter implements GlobalFilter {
     @Value("${spring.application.name}")
     private String appName;
 
-    /**
-     * nacos配置中心地址
-     */
-    @Value("${spring.cloud.nacos.config.server-addr}")
-    private String nacosServer;
-
-    /**
-     * nacos中，用于存放sentinel规则的命名空间
-     */
-    @Value("${spring.cloud.sentinel.filter.namespace}")
-    private String sentinelNamespace;
-
     @Resource
     private SpringCloudGatewayConfig gatewayConfig;
 
-    /**
-     * 用于监听应用规则文件
-     */
-    private ConfigService configService;
+    @Resource
+    private SentinelConfigService sentinelConfigService;
 
     /**
      * <routeId, RouteAppRules>
@@ -157,7 +140,6 @@ public class GatewaySentinelFilter implements GlobalFilter {
     @EventListener
     public void onApplicationReady(ApplicationReadyEvent event) {
         try {
-            initConfigService();
             initAppRules();
         } catch (NacosException e) {
             throw new RuntimeException(e);
@@ -264,23 +246,6 @@ public class GatewaySentinelFilter implements GlobalFilter {
     }
 
     /**
-     * 初始化用于监听sentinel规则文件的客户端
-     * NOTE：不能直接注入ConfigManager，因为namespace不一样
-     */
-    private void initConfigService() {
-
-        Properties properties = new Properties();
-        properties.setProperty("serverAddr", nacosServer);
-        properties.setProperty("namespace", sentinelNamespace);
-
-        try {
-            configService = ConfigFactory.createConfigService(properties);
-        } catch (NacosException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
      * 启动时，初始化应用规则
      */
     private void initAppRules() throws NacosException {
@@ -343,11 +308,11 @@ public class GatewaySentinelFilter implements GlobalFilter {
     private void fetchAndListenRules(String routeId) throws NacosException {
 
         // 拉取流控规则
-        String flowRules = configService.getConfig(buildFlowRulesFileName(routeId), appName, 5000);
+        String flowRules = sentinelConfigService.get().getConfig(buildFlowRulesFileName(routeId), appName, 5000);
         doRefreshAppFlowRules(routeId, flowRules);
 
         // 拉取降级规则
-        String degradeRules = configService.getConfig(buildDegradeRulesFileName(routeId), appName, 5000);
+        String degradeRules = sentinelConfigService.get().getConfig(buildDegradeRulesFileName(routeId), appName, 5000);
         doRefreshAppDegradeRules(routeId, degradeRules);
 
         startListenRules(routeId);
@@ -364,7 +329,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
                     doRefreshAppFlowRules(routeId, rules);
                 }
             });
-            configService.addListener(flowRulesFile, appName, allRuleListeners.get(flowRulesFile));
+            sentinelConfigService.get().addListener(flowRulesFile, appName, allRuleListeners.get(flowRulesFile));
         }
 
         // 监听降级规则
@@ -376,7 +341,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
                     doRefreshAppDegradeRules(routeId, rules);
                 }
             });
-            configService.addListener(degradeRulesFile, appName, allRuleListeners.get(degradeRulesFile));
+            sentinelConfigService.get().addListener(degradeRulesFile, appName, allRuleListeners.get(degradeRulesFile));
         }
     }
 
@@ -527,7 +492,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
 
         // 取消流控规则监听
         String flowRulesFile = buildFlowRulesFileName(routeId);
-        configService.removeListener(flowRulesFile, appName, allRuleListeners.get(flowRulesFile));
+        sentinelConfigService.get().removeListener(flowRulesFile, appName, allRuleListeners.get(flowRulesFile));
         allRuleListeners.remove(flowRulesFile);
 
         // 卸载流控规则
@@ -537,7 +502,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
 
         // 取消降级规则监听
         String degradeRulesFile = buildDegradeRulesFileName(routeId);
-        configService.removeListener(degradeRulesFile, appName, allRuleListeners.get(degradeRulesFile));
+        sentinelConfigService.get().removeListener(degradeRulesFile, appName, allRuleListeners.get(degradeRulesFile));
         allRuleListeners.remove(degradeRulesFile);
         // 卸载降级规则
         List<DegradeRule> globalDegradeRules = DegradeRuleManager.getRules();

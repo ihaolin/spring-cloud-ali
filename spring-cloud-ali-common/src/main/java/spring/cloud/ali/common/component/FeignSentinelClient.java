@@ -11,7 +11,6 @@ import feign.Client;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Response;
-import io.jsonwebtoken.lang.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.util.pattern.PathPatternParser;
@@ -24,7 +23,6 @@ import spring.cloud.ali.common.util.JsonUtil;
 
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -110,12 +108,12 @@ public class FeignSentinelClient implements Client {
             return serverInternalError(request);
         } catch (SocketTimeoutException e) {
             // 接口响应超时
-            log.error("api response timeout: resource={}, request={}", resource, request);
+            log.error("feign response timeout: resource={}, request={}", resource, request);
             Tracer.traceEntry(new SystemException(e), sentinelEntry);
             return serverInternalError(request);
         } catch (Throwable e){
             // 未知异常
-            log.error("unknown exception: resource={}, error={}", resource, Throwables.getStackTraceAsString(e));
+            log.error("feign unknown exception: resource={}, error={}", resource, Throwables.getStackTraceAsString(e));
             Tracer.traceEntry(new SystemException(e), sentinelEntry);
             return serverInternalError(request);
         } finally {
