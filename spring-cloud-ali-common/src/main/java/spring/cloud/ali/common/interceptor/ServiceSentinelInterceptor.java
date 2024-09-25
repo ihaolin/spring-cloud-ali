@@ -21,6 +21,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -47,7 +48,7 @@ public class ServiceSentinelInterceptor implements HandlerInterceptor {
     /**
      * 用于路径资源匹配
      */
-    private volatile Map<String, FlowRule> flowRuleMap;
+    private volatile Map<String, FlowRule> flowRuleMap = Collections.emptyMap();
 
     @EventListener
     public void onApplicationReady(ApplicationReadyEvent event) {

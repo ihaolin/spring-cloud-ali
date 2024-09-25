@@ -96,15 +96,16 @@ public class CustomFeignClient implements Client {
     @Override
     public Response execute(Request request, Request.Options options) throws IOException {
 
-        String resource = resolveResource(request);
-        if(Strings.isNullOrEmpty(resource)){
-            // 未匹配到降级规则
-            return delegate.execute(request, options);
-        }
-
         Entry sentinelEntry = null;
         Response response;
+        String resource = resolveResource(request);
         try {
+
+            if(Strings.isNullOrEmpty(resource)){
+                // 未匹配到降级规则
+                return delegate.execute(request, options);
+            }
+
             sentinelEntry = SphU.entry(resource);
             response = delegate.execute(request, options);
             if (Objects.equals(HttpStatus.OK.value(), response.status())){

@@ -1,5 +1,6 @@
 package spring.cloud.ali.order.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -22,5 +23,12 @@ public class OrderController {
             @RequestParam String userName, @RequestParam String orderNo) throws InterruptedException {
         // Thread.sleep(1000000);
         return HttpResult.success(orderService.queryUserOrder(userName, orderNo));
+    }
+
+    @GetMapping(value = "/paging")
+    public HttpResult<IPage<OrderDetailResult>> pagingOrders(
+            @RequestParam Long userId, @RequestParam Integer pageNo) throws InterruptedException {
+        // Thread.sleep(1000000);
+        return HttpResult.success(orderService.pagingUserOrders(userId, pageNo));
     }
 }
