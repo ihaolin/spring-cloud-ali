@@ -74,14 +74,14 @@ public class SentinelConfigService implements InitializingBean {
      *  key：group#dataId
      *  value：监听器对象
      */
-    private Map<String, Listener> groupDataListeners = new HashMap<>();
+    private final Map<String, Listener> groupDataListeners = new HashMap<>();
 
     /**
      * Nacos配置规则（卸载规则时，需要卸载规则）
      *  key：group#dataId
      *  value：规则列表
      */
-    private Map<String, List<? extends AbstractRule>> groupDataRules = new HashMap<>();
+    private final Map<String, List<? extends AbstractRule>> groupDataRules = new HashMap<>();
 
     @Override
     public void afterPropertiesSet() {
@@ -104,16 +104,6 @@ public class SentinelConfigService implements InitializingBean {
         } catch (NacosException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    public ConfigService get(){
-
-        if (configService == null){
-            throw new RuntimeException("configService isn't initialized, " +
-                    "you must configure ${spring.cloud.sentinel.nacos.namespace} item in your application");
-        }
-
-        return configService;
     }
 
     /**
@@ -156,6 +146,7 @@ public class SentinelConfigService implements InitializingBean {
      * 刷新应用的流控规则
      * @param groupDataLatestRules 最新的流控规则
      */
+    @SuppressWarnings("unchecked")
     private List<FlowRule> doRefreshFlowRules(String dataId, String group, List<FlowRule> groupDataLatestRules) {
         flowRulesRefreshLock.lock();
         try {
@@ -224,6 +215,7 @@ public class SentinelConfigService implements InitializingBean {
      * @param groupDataLatestRules 最新的熔断规则
      * @return 刷新后的规则
      */
+    @SuppressWarnings("unchecked")
     private List<DegradeRule> doRefreshDegradeRules(String dataId, String group, List<DegradeRule> groupDataLatestRules) {
         degradeRulesRefreshLock.lock();
         try {
