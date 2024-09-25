@@ -151,7 +151,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
                     }));
         } catch (BlockException e){
             HttpRespStatus rs = e instanceof FlowException ? HTTP_REQUEST_TOO_MANY : DEFAULT;
-            log.warn("resource {} is blocked: rule={}", resource, e.getRule());
+            log.error("api request blocked: resource={}, rule={}", resource, e.getRule());
             return resp.writeWith(Mono.just(resp.bufferFactory().wrap(
                     rs.getMsg().getBytes(StandardCharsets.UTF_8))));
         } catch (Throwable e){

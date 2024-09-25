@@ -23,9 +23,10 @@ public class FeignClientConfig {
     @Bean
     @Conditional(OnRetryNotEnabledCondition.class)
     public Client feignClient(LoadBalancerClient loadBalancerClient,
-                              LoadBalancerClientFactory loadBalancerClientFactory) {
+                              LoadBalancerClientFactory loadBalancerClientFactory,
+                              FeignSentinelClient feignSentinelClient) {
         return new FeignBlockingLoadBalancerClient(
-                new FeignSentinelClient(new Client.Default(null, null)),
+                feignSentinelClient,
                 loadBalancerClient,
                 loadBalancerClientFactory);
     }
@@ -36,9 +37,11 @@ public class FeignClientConfig {
     @ConditionalOnProperty(value = "spring.cloud.loadbalancer.retry.enabled", havingValue = "true",
             matchIfMissing = true)
     public Client feignRetryClient(LoadBalancerClient loadBalancerClient,
-                                   LoadBalancedRetryFactory loadBalancedRetryFactory, LoadBalancerClientFactory loadBalancerClientFactory) {
+                                   LoadBalancedRetryFactory loadBalancedRetryFactory,
+                                   LoadBalancerClientFactory loadBalancerClientFactory,
+                                   FeignSentinelClient feignSentinelClient) {
         return new RetryableFeignBlockingLoadBalancerClient(
-                new FeignSentinelClient(new Client.Default(null, null)),
+                feignSentinelClient,
                 loadBalancerClient,
                 loadBalancedRetryFactory,
                 loadBalancerClientFactory);

@@ -4,6 +4,9 @@ import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.nacos.api.exception.NacosException;
+import com.alibaba.nacos.shaded.com.google.common.base.Strings;
 import com.alibaba.nacos.shaded.com.google.common.collect.ImmutableMap;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
@@ -14,22 +17,28 @@ import feign.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.util.pattern.PathPattern;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.exception.BizException;
 import spring.cloud.ali.common.exception.ServiceException;
 import spring.cloud.ali.common.exception.SystemException;
 import spring.cloud.ali.common.util.JsonUtil;
+import spring.cloud.ali.common.util.WebUtil;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 /**
- * 自定义FeignClient
+ * FeignClient包装类
  */
 @Slf4j
 public class FeignSentinelClient implements Client {
@@ -48,33 +57,50 @@ public class FeignSentinelClient implements Client {
     @Resource
     private SentinelConfigService sentinelConfigService;
 
+    /**
+     * 用于路径资源匹配
+     */
+    private volatile Map<String, DegradeRule> degradeRuleMap = new HashMap<>();
+
+    /**
+     * Feign Client
+     */
     private final Client delegate;
 
     public FeignSentinelClient(Client delegate) {
         this.delegate = delegate;
     }
 
+    @PostConstruct
+    public void onInit() {
+        try {
+            sentinelConfigService.initDegradeRules(DEGRADE_RULES, appName, new SentinelConfigService.RuleListener<DegradeRule>() {
+
+                @Override
+                public void prevRefresh(List<DegradeRule> refreshing) {
+                    // 增加前缀feign和limitApp，避免和其他应用规则冲突
+                    refreshing.forEach((r) -> r.setResource(
+                            RESOURCE_PREFIX + RESOURCE_SPLITTER + r.getLimitApp() + RESOURCE_SPLITTER + r.getResource()));
+                }
+
+                @Override
+                public void postRefresh(List<DegradeRule> refreshed) {
+                    degradeRuleMap = refreshed.stream().collect(Collectors.toMap(DegradeRule::getResource, f -> f));
+                }
+            });
+        } catch (NacosException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     @Override
-    public Response execute(Request request, Request.Options options) {
+    public Response execute(Request request, Request.Options options) throws IOException {
 
-        RequestTemplate rt = request.requestTemplate();
-        String appName = rt.feignTarget().name();
-        String reqMethod = rt.method();
-        String reqUri = rt.path().replace(rt.feignTarget().url(), "");
-
-        /*
-         * 内存中的规则：
-         *  feign#ali-user#GET#/users/detail
-         * 配置文件中：
-         *  {
-         *      "resource": "GET#/users/detail",
-         *      "limitApp": "ali-user",
-         *      "..."
-         *  }
-         */
-        String resource = RESOURCE_PREFIX + RESOURCE_SPLITTER +
-                            appName + RESOURCE_SPLITTER +
-                                reqMethod + RESOURCE_SPLITTER + reqUri;
+        String resource = resolveResource(request);
+        if(Strings.isNullOrEmpty(resource)){
+            // 未匹配到降级规则
+            return delegate.execute(request, options);
+        }
 
         Entry sentinelEntry = null;
         Response response;
@@ -89,11 +115,12 @@ public class FeignSentinelClient implements Client {
             if (HttpRespStatus.isServiceUnAvailable(response.status())){
                 // 熔断异常拦截埋点
                 Tracer.traceEntry(new ServiceException(response.status(), response.reason()), sentinelEntry);
+                log.warn("resource {} isn't available, trace entry: {}", resource, sentinelEntry);
             }
 
         } catch (BlockException e) {
             // 熔断了
-            log.error("feign sentinel blocked: entry={}", sentinelEntry);
+            log.error("feign request blocked: resource={}, rule={}", resource, e.getRule());
             return serverInternalError(request);
         } catch (SocketTimeoutException e) {
             // 接口响应超时
@@ -112,6 +139,46 @@ public class FeignSentinelClient implements Client {
         }
 
         return response;
+    }
+
+    private String resolveResource(Request request) {
+        // GET#/api/users
+        RequestTemplate rt = request.requestTemplate();
+        String targetName = rt.feignTarget().name();    // 应用名称, @FeignClient(name)
+        String reqMethod = rt.method();
+        String reqUri = rt.path().replace(rt.feignTarget().url(), "");
+
+        /*
+         * 内存中的规则：
+         *  feign#ali-user#GET#/users/detail
+         * 配置文件中：
+         *  {
+         *      "resource": "GET#/users/detail",
+         *      "limitApp": "ali-user", （和targetName保持一致）
+         *      "..."
+         *  }
+         */
+        String resourcePrefix = RESOURCE_PREFIX + RESOURCE_SPLITTER + targetName + RESOURCE_SPLITTER;
+        String resource = resourcePrefix + reqMethod + RESOURCE_SPLITTER + reqUri;
+
+        // 精确匹配
+        if (degradeRuleMap.containsKey(resource)){
+            return resource;
+        }
+
+        // 尝试模式匹配，如/users/123 -> /users/{id}
+        for (String degradeResource : degradeRuleMap.keySet()){
+            if (degradeResource.contains("{")){
+                PathPattern.PathMatchInfo matched =
+                        WebUtil.matchUri(degradeResource.replace(resourcePrefix, ""), reqUri);
+                if (matched != null){
+                    // 匹配到了
+                    return degradeResource;
+                }
+            }
+        }
+
+        return null;
     }
 
     private static Response serverInternalError(Request request) {
