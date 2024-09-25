@@ -92,7 +92,7 @@
 
 |     模块名称      |                           模块用途                           |                             备注                             |
 | :---------------: | :----------------------------------------------------------: | :----------------------------------------------------------: |
-|  **ali-common**   | 公共模块，大部分业务模块需要依赖，<br />主要包含一些常用工具、组件等 | 该模块中添加依赖包时，<br />通常会定义`provided`<br />确保不会造成强依赖 |
+|  **ali-common**   | 公共模块，大部分业务模块需要依赖，<br />主要包含一些常用工具、组件等 | 该模块中添加依赖包时，<br />通常会定义`provided`<br />确保不会造成强依赖<br />公共组件<br />不应添加@Component注解<br />避免被自动扫描注入<br />由业务手动配置注入 |
 |  **ali-gateway**  |       网关模块，提供路由、流控、<br />熔断、鉴权等能力       |      该模块用于治理出入口流量，<br />不负责具体业务逻辑      |
 | **ali-user-api**  |           用户服务API<br />提供用户HTTP/RPC接口等            |  调用方可直接引用<br />依赖包通常很少<br />尽量为`provided`  |
 |   **ali-user**    |          用户服务实现<br />对api模块的业务逻辑实现           |                        调用方不能引用                        |
@@ -169,16 +169,6 @@ spring:
 
 > 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现：
 
-+ `GatewaySentinelFilter`类配置：
-
-  ```JAVA
-  /**
-   * 存放sentinel规则的命名空间（id）
-   */
-  @Value("${spring.cloud.sentinel.filter.namespace}")
-  private String sentinelNamespace;
-  ```
-
 + 流控规则文件配置：
 
   ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_flow_rules.png)
@@ -187,7 +177,7 @@ spring:
 
 2. `ali-gateway`：使用网关应用名称，作为配置分组
 
-3. `flow-rules-ali-user`：微服务应用`ali-user`（与route.id一致）的流控规则配置：
+3. `flow-rules-ali-user`.json：微服务应用`ali-user`（与route.id一致）的流控规则配置：
 
    ```json
    [
@@ -215,16 +205,6 @@ spring:
 #### 服务流控
 
 > 服务流控，作为服务**兜底流控**，应进行策略配置，结合**Spring MVC Interceptor**、**Sentinel**和**Nacos**实现限流拦截器，可参考[ServiceSentinelInterceptor类](./spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/ServiceSentinelInterceptor.java)实现：
-
-+ `ServiceSentinelInterceptor`类配置：
-
-  ```JAVA
-  /**
-   * 存放sentinel规则的命名空间（id）
-   */
-  @Value("${spring.cloud.sentinel.filter.namespace}")
-  private String sentinelNamespace;
-  ```
 
 + 流控规则配置文件：
 
@@ -265,17 +245,66 @@ spring:
 
 #### 网关调用内部服务
 
+> 通过网关路由的应用接口，默认接入降级能力，业务需在Nacos中配置相关接口熔断降级规则，具体实现可参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现，如需对订单应用接口作熔断降级：
 
++ 配置文件：
+
+  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_degrade_rules.png)
+
+  1. `_sentinel_`：存放sentinel规则的配置命名空间
+  2. `ali-gateway`：使用网关应用名称，作为配置分组
+  3. `degrade-rules-ali-user.json`：微服务应用`ali-user`（与route.id一致）的流控规则配置
+
++ 配置详情：（资源标识：请求方法#请求路径）
+
+  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_degrade_rule.png)
 
 #### 内部服务间调用
 
+> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[FeignSentinelClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/FeignSentinelClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
 
+```java
+@Bean
+public FeignSentinelClient feignSentinelClient(){
+    return new FeignSentinelClient(new Client.Default(null, null));
+}
+
+@Bean
+public FeignClientConfig feignClientConfig(){
+    return new FeignClientConfig();
+}
+
+@FeignClient(name = "ali-user", configuration = FeignClientConfig.class)
+public interface UserHttpService {
+
+    @GetMapping("/users/detail")
+    HttpResult<UserDetailResult> queryUserByName(@RequestParam String userName);
+
+    @GetMapping("/users/{userId}")
+    HttpResult<UserDetailResult> queryUserById(@PathVariable Long userId);
+}
+```
+
+**Nacos**中的降级规则配置：
+
+![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_nacos_degrade_rules_feign.png)
+
+1. `_sentinel_`：存放sentinel规则的配置命名空间
+2. `ali-order`：当前应用名称
+3. `degrade-rules-feign.json`：feign调用降级规则文件
+
+![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_nacos_degrade_rule_feign.png)
+
+1. `limitApp`：应用标识，和`@FeignClient`中的`name`一致，为了确保不同应用可能存在相同的path
+2. `resouce`：资源标识，请求方法#请求路径
 
 #### 中间件调用
 
 
 
 #### 第三方调用
+
+
 
 ### 4.7 监控报警
 
