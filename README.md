@@ -131,13 +131,123 @@ spring:
 
 > 配置中心通常包含两部分：通用配置(ali-common.yaml)和应用配置(ali-user.yaml, ali-order.yaml, ...)。
 
-#### 通用配置
+#### 3.2.1 通用配置
 
-#### 应用配置
+> 业务应用公共配置项，如数据源，Web配置等：
 
-#### 配置监听
+```yaml
+## ali-common.yaml
+spring:
+  codec:        # 限制请求体的最大内存大小为10MB
+    max-in-memory-size: 10MB
+  servlet:      # 限制请求和文件上传大小
+    multipart:
+      max-file-size: 10MB 
+      max-request-size: 15MB 
+  web:          
+    resources:  # 禁止静态资源映射，如/error
+      add-mappings: false
+  mvc:          # 当path不存在时，抛出异常
+    throw-exception-if-no-handler-found: true
+  datasource:   # 数据源配置
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: ge3zosQ23F
+    url: jdbc:mysql://172.25.0.95:31623/spring-cloud-ali?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&allowMultiQueries=true&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+    filters: stat,slf4j
+    initial-size: 1
+    max-active: 50
+    min-idle: 5
+    test-on-borrow: false
+    test-while-idle: true
+    test-on-return: false
+    validation-query: select 1
+    stat-view-servlet:
+      enabled: true
+      url-pattern: /druid/*
+      login-username: admin
+      login-password: admin
+    filter:
+      stat:
+        enabled: true
+        log-slow-sql: true
+        slow-sql-millis: 10000
+        merge-sql: false
+      wall:
+        config:
+          multi-statement-allow: true
+  redis:
+    host: 172.25.0.95
+    port: 30108
+    password: xhEt7SNFqA
 
+# Mybatis-Plus配置
+mybatis-plus:     
+  mapper-locations: classpath:/mapper/*.xml
+  type-aliases-package: spring.cloud.ali.**.model
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-not-delete-value: 0
+      logic-delete-value: 1
 
+# feign配置    
+feign:          
+  client:
+    config:
+      default:   # 默认设置，也可通过name区分配置
+        connectTimeout: 5000  
+        readTimeout: 5000
+```
+
+#### 3.2.2 应用配置
+
+> 应用配置项，如一些业务开关策略等：
+
+```yaml
+## ali-user.yaml
+user:
+  nickname: 'ALCDxxX'
+
+spring:
+  cloud:
+    sentinel:
+      nacos:
+        namespace: '2023a079-1676-44ab-8e5d-d70d02a2a0f7'   
+      transport:
+        # 这个端口是会在业务应用内启动一个Http Server，与Sentinel控制台交互
+        port: 18001
+        dashboard: localhost:8010
+```
+
+#### 3.2.3 配置监听
+
+> Nacos默认开启了配置监听，业务应用可用通过`@RefreshScope`注解，来监听及刷新：
+
+```java
+@Data
+@RefreshScope
+@ConfigurationProperties(prefix = "user")
+@Component
+public class AppConfig {
+
+    private String nickname;
+}
+```
+
+#### 3.2.4 组件配置
+
+> 组件配置，是指业务应用经常会使用到的基础组件，通常会在ali-common中实现并提供配置类（如[CommonConfig](./spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/CommonConfig.java)、[WebConfig](./spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/WebConfig.java)等），但不会强制引入，业务方需自行引入，如：
+
+```java
+@Import({CommonConfig.class, WebConfig.class, RedisConfig.class})
+@Configuration
+public class ComponentConfig {
+
+}
+```
 
 ## 四、服务治理
 
@@ -165,7 +275,7 @@ spring:
 > 4. 这里的流控，更多是指**被调用方自限流**，也可作**他限流**（调用方主动流控）；
 > 5. 若需要在Sentinel控制台修改规则并生效，需改动控制台代码，将规则更新请求，转发至Nacos(publishConfig)，而不是应用客户端Transport端口）
 
-#### 网关流控
+#### 4.5.1 网关流控
 
 > 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现：
 
@@ -202,7 +312,7 @@ spring:
    ]
    ```
 
-#### 服务流控
+#### 4.5.2 服务流控
 
 > 服务流控，作为服务**兜底流控**，应进行策略配置，结合**Spring MVC Interceptor**、**Sentinel**和**Nacos**实现限流拦截器，可参考[ServiceSentinelInterceptor类](./spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/ServiceSentinelInterceptor.java)实现：
 
@@ -243,7 +353,7 @@ spring:
 
 > 降级主要针对应用外部调用场景，当外部服务持续不可用时，应作及时熔断降级，降低雪崩风险。场景主要包含**网关调用内部服务**、**内部服务间调用**、**中间件调用**、**第三方调用**等
 
-#### 网关调用内部服务
+#### 4.6.1 网关调用内部服务
 
 > 通过网关路由的应用接口，默认接入降级能力，业务需在Nacos中配置相关接口熔断降级规则，具体实现可参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现，如需对订单应用接口作熔断降级：
 
@@ -259,14 +369,14 @@ spring:
 
   ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_degrade_rule.png)
 
-#### 内部服务间调用
+#### 4.6.2 内部服务间调用
 
-> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[CustomFeignClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/CustomFeignClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
+> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[WrappedFeignClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/WrappedFeignClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
 
 ```java
 @Bean
-public CustomFeignClient customFeignClient(){
-    return new CustomFeignClient(new Client.Default(null, null));
+public WrappedFeignClient wrappedFeignClient(){
+    return new WrappedFeignClient(new Client.Default(null, null));
 }
 
 @Bean
@@ -298,11 +408,11 @@ public interface UserHttpService {
 1. `limitApp`：应用标识，和`@FeignClient`中的`name`一致，为了确保不同应用可能存在相同的path
 2. `resouce`：资源标识，请求方法#请求路径
 
-#### 中间件调用
+#### 4.6.3 中间件调用
 
 
 
-#### 第三方调用
+#### 4.6.4 第三方调用
 
 
 

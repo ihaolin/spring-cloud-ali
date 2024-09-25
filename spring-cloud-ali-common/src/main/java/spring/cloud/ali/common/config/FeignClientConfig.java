@@ -12,7 +12,7 @@ import org.springframework.cloud.openfeign.loadbalancer.OnRetryNotEnabledConditi
 import org.springframework.cloud.openfeign.loadbalancer.RetryableFeignBlockingLoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
-import spring.cloud.ali.common.component.CustomFeignClient;
+import spring.cloud.ali.common.component.WrappedFeignClient;
 
 /**
  * FeignClient配置类，替换默认FeignClient
@@ -24,9 +24,9 @@ public class FeignClientConfig {
     @Conditional(OnRetryNotEnabledCondition.class)
     public Client feignClient(LoadBalancerClient loadBalancerClient,
                               LoadBalancerClientFactory loadBalancerClientFactory,
-                              CustomFeignClient customFeignClient) {
+                              WrappedFeignClient wrappedFeignClient) {
         return new FeignBlockingLoadBalancerClient(
-                customFeignClient,
+                wrappedFeignClient,
                 loadBalancerClient,
                 loadBalancerClientFactory);
     }
@@ -39,9 +39,9 @@ public class FeignClientConfig {
     public Client feignRetryClient(LoadBalancerClient loadBalancerClient,
                                    LoadBalancedRetryFactory loadBalancedRetryFactory,
                                    LoadBalancerClientFactory loadBalancerClientFactory,
-                                   CustomFeignClient customFeignClient) {
+                                   WrappedFeignClient wrappedFeignClient) {
         return new RetryableFeignBlockingLoadBalancerClient(
-                customFeignClient,
+                wrappedFeignClient,
                 loadBalancerClient,
                 loadBalancedRetryFactory,
                 loadBalancerClientFactory);

@@ -3,7 +3,7 @@ package spring.cloud.ali.common.config;
 import feign.Client;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
-import spring.cloud.ali.common.component.CustomFeignClient;
+import spring.cloud.ali.common.component.WrappedFeignClient;
 import spring.cloud.ali.common.component.SentinelConfigService;
 
 public class CommonConfig {
@@ -19,8 +19,8 @@ public class CommonConfig {
     }
 
     @Bean
-    public CustomFeignClient customFeignClient(){
-        return new CustomFeignClient(new Client.Default(null, null));
+    public WrappedFeignClient wrappedFeignClient(){
+        return new WrappedFeignClient(new Client.Default(null, null));
     }
 
     @Bean

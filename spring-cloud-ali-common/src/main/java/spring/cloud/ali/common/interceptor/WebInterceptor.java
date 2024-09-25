@@ -33,7 +33,7 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY
  * TODO 增加默认限流策略
  */
 @Slf4j
-public class ServiceSentinelInterceptor implements HandlerInterceptor {
+public class WebInterceptor implements HandlerInterceptor {
 
     private static final String FLOW_RULES = "flow-rules.json";
 

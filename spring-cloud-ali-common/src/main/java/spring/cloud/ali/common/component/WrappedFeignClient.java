@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  * FeignClient包装类
  */
 @Slf4j
-public class CustomFeignClient implements Client {
+public class WrappedFeignClient implements Client {
 
     private static final String SERVER_INTERNAL_ERROR = JsonUtil.toJson(HttpResult.fail(BizException.SERVER_INTERNAL_ERROR));
 
@@ -66,7 +66,7 @@ public class CustomFeignClient implements Client {
      */
     private final Client delegate;
 
-    public CustomFeignClient(Client delegate) {
+    public WrappedFeignClient(Client delegate) {
         this.delegate = delegate;
     }
 
