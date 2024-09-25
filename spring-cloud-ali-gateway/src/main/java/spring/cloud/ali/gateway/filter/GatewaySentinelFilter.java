@@ -120,12 +120,13 @@ public class GatewaySentinelFilter implements GlobalFilter {
         }
 
         String resource = resolveResource(route, req);
-        if (Strings.isNullOrEmpty(resource)){
-            // 该路径，没有配置规则
-            return chain.filter(exchange);
-        }
-
         try {
+
+            if (Strings.isNullOrEmpty(resource)){
+                // 该路径，没有配置规则
+                return chain.filter(exchange);
+            }
+
             Context sentinelCtx = ContextUtil.enter(SENTINEL_CTX);
             Entry entry = SphU.entry(resource);
             return chain.filter(exchange)

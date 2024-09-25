@@ -28,7 +28,6 @@ import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -94,7 +93,7 @@ public class CustomFeignClient implements Client {
     }
 
     @Override
-    public Response execute(Request request, Request.Options options) throws IOException {
+    public Response execute(Request request, Request.Options options) {
 
         Entry sentinelEntry = null;
         Response response;
@@ -170,8 +169,9 @@ public class CustomFeignClient implements Client {
         // 尝试模式匹配，如/users/123 -> /users/{id}
         for (String degradeResource : degradeRuleMap.keySet()){
             if (degradeResource.contains("{")){
-                PathPattern.PathMatchInfo matched =
-                        WebUtil.matchUri(degradeResource.replace(resourcePrefix, ""), reqUri);
+                // feign#ali-user#GET#/users/{userId} -> /users/{userId}
+                String fmtDegradeResource = degradeResource.replace(resourcePrefix + reqMethod + RESOURCE_SPLITTER, "");
+                PathPattern.PathMatchInfo matched = WebUtil.matchUri(fmtDegradeResource, reqUri);
                 if (matched != null){
                     // 匹配到了
                     return degradeResource;
