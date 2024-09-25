@@ -261,12 +261,12 @@ spring:
 
 #### 内部服务间调用
 
-> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[FeignSentinelClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/FeignSentinelClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
+> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[CustomFeignClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/CustomFeignClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
 
 ```java
 @Bean
-public FeignSentinelClient feignSentinelClient(){
-    return new FeignSentinelClient(new Client.Default(null, null));
+public CustomFeignClient customFeignClient(){
+    return new CustomFeignClient(new Client.Default(null, null));
 }
 
 @Bean
