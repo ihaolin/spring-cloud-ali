@@ -51,7 +51,7 @@ public class WebInterceptor implements HandlerInterceptor {
     private volatile Map<String, FlowRule> flowRuleMap = Collections.emptyMap();
 
     @EventListener
-    public void onApplicationReady(ApplicationReadyEvent event) {
+    public void onAppReady(ApplicationReadyEvent event) {
         try {
             sentinelConfigService.initFlowRules(FLOW_RULES, appName, new SentinelConfigService.RuleListener<FlowRule>() {
                 @Override
