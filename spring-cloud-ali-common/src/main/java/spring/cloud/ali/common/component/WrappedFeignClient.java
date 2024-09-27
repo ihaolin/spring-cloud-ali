@@ -30,7 +30,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,14 +56,8 @@ public class WrappedFeignClient implements Client {
     @Resource
     private SentinelConfigService sentinelConfigService;
 
-    /**
-     * 用于路径资源匹配
-     */
-    private volatile Map<String, DegradeRule> degradeRuleMap = new HashMap<>();
+    private volatile Map<String, DegradeRule> degradeRuleMap = Collections.emptyMap();
 
-    /**
-     * Feign Client
-     */
     private final Client delegate;
 
     public WrappedFeignClient(Client delegate) {
@@ -129,7 +123,7 @@ public class WrappedFeignClient implements Client {
             return serverInternalError(request);
         } catch (Throwable e){
             // 未知异常
-            log.error("feign unknown exception: resource={}, error={}", resource, Throwables.getStackTraceAsString(e));
+            log.error("feign request exception: resource={}, error={}", resource, Throwables.getStackTraceAsString(e));
             Tracer.traceEntry(new SystemException(e), sentinelEntry);
             return serverInternalError(request);
         } finally {

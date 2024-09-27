@@ -1,21 +1,75 @@
 package spring.cloud.ali.common.interceptor;
 
+import com.alibaba.csp.sentinel.Entry;
+import com.alibaba.csp.sentinel.SphU;
+import com.alibaba.csp.sentinel.Tracer;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
+import com.alibaba.nacos.api.exception.NacosException;
+import com.alibaba.nacos.shaded.com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.util.pattern.PathPattern;
+import spring.cloud.ali.common.component.SentinelConfigService;
+import spring.cloud.ali.common.exception.RedisException;
+import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 @Slf4j
 public class RedisInterceptor implements MethodInterceptor {
 
+    private static final String DEGRADE_RULES = "degrade-rules-redis.json";
+
+    private static final String RESOURCE_PREFIX = "redis";
+
+    private static final String RESOURCE_SPLITTER = "#";
+
     private final Map<Class<?>, Object> operationProxies = new ConcurrentHashMap<>();
+
+    @Value("${spring.application.name}")
+    private String appName;
+
+    @Resource
+    private SentinelConfigService sentinelConfigService;
+
+    private volatile Map<String, DegradeRule> degradeRuleMap = Collections.emptyMap();
+
+    @PostConstruct
+    public void onInit() {
+        try {
+            sentinelConfigService.initDegradeRules(DEGRADE_RULES, appName, new SentinelConfigService.RuleListener<DegradeRule>() {
+
+                @Override
+                public void prevRefresh(List<DegradeRule> refreshing) {
+                    // 增加前缀redis，避免和其他规则冲突
+                    refreshing.forEach((r) -> r.setResource(
+                            RESOURCE_PREFIX + RESOURCE_SPLITTER + r.getResource()));
+                }
+
+                @Override
+                public void postRefresh(List<DegradeRule> refreshed) {
+                    degradeRuleMap = refreshed.stream().collect(Collectors.toMap(DegradeRule::getResource, f -> f));
+                }
+            });
+        } catch (NacosException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @Nullable
     @Override
@@ -46,20 +100,71 @@ public class RedisInterceptor implements MethodInterceptor {
         return (T) proxyFactory.getProxy();
     }
 
-    static class RedisOperationInterceptor implements MethodInterceptor{
+    class RedisOperationInterceptor implements MethodInterceptor{
 
         @Nullable
         @Override
         public Object invoke(@Nonnull MethodInvocation invocation) throws Throwable {
-            String operationName = invocation.getMethod().getName();
-            Object[] args = invocation.getArguments();
 
-            if (args.length > 0 && args[0] instanceof String) {
-                String operationKey = (String) args[0];
-                log.info("redis operation: {} {}", operationName, operationKey);
+            Object[] args = invocation.getArguments();
+            if (args.length == 0 || !(args[0] instanceof String)){
+                return invocation.proceed();
             }
 
-            return invocation.proceed();
+            Entry sentinelEntry = null;
+            String resource = resolveResource(invocation);
+            try {
+
+                if(Strings.isNullOrEmpty(resource)){
+                    // 未匹配到降级规则
+                    return invocation.proceed();
+                }
+
+                sentinelEntry = SphU.entry(resource);
+
+                return invocation.proceed();
+            } catch (BlockException e){
+                log.error("redis operation blocked: resource={}, rule={}", resource, e.getRule());
+                throw e;
+            } catch (Throwable e){
+                log.error("redis operation exception: resource={}, error={}", resource, Throwables.getStackTraceAsString(e));
+                RedisException re = new RedisException(e);
+                Tracer.traceEntry(re, sentinelEntry);
+                throw re;
+            } finally {
+                if (sentinelEntry != null){
+                    sentinelEntry.exit();
+                }
+            }
         }
+    }
+
+    private String resolveResource(MethodInvocation invocation) {
+
+        String optName = invocation.getMethod().getName();
+        String optKey = (String) invocation.getArguments()[0];
+
+        String resourcePrefix = RESOURCE_PREFIX + RESOURCE_SPLITTER;
+        String optNameKey = optName + RESOURCE_SPLITTER + optKey;
+        String resource = resourcePrefix + optNameKey;
+        if (degradeRuleMap.containsKey(resource)){
+            // 精确匹配到了
+            return resource;
+        }
+
+        // 尝试模式匹配，如users:123 -> users:{id}
+        for (String degradeResource : degradeRuleMap.keySet()){
+            if (degradeResource.contains("{")){
+                // redis#get#users:{userId} -> get#users:{userId}
+                String fmtDegradeResource = degradeResource.replace(resourcePrefix, "");
+                PathPattern.PathMatchInfo matched = WebUtil.matchUri(fmtDegradeResource, optNameKey);
+                if (matched != null){
+                    // 匹配到了
+                    return degradeResource;
+                }
+            }
+        }
+
+        return null;
     }
 }

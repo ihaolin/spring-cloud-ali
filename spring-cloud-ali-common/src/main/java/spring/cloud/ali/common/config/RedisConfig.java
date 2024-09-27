@@ -8,7 +8,12 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import spring.cloud.ali.common.interceptor.RedisInterceptor;
 
+import javax.annotation.Resource;
+
 public class RedisConfig {
+
+    @Resource
+    private RedisInterceptor redisInterceptor;
 
     @SuppressWarnings("unchecked")
     @Bean
@@ -27,7 +32,7 @@ public class RedisConfig {
         // 使用代理工厂添加拦截器
         ProxyFactory factory = new ProxyFactory();
         factory.setTarget(template);
-        factory.addAdvice(new RedisInterceptor());
+        factory.addAdvice(redisInterceptor);
 
         // 返回代理后的 RedisTemplate
         return (RedisTemplate<String, Object>) factory.getProxy();
