@@ -106,7 +106,7 @@ public class WebInterceptor implements HandlerInterceptor {
         for (String flowResource : flowRuleMap.keySet()){
             if (flowResource.contains("{")){
                 PathPattern.PathMatchInfo matched =
-                        WebUtil.matchUri(flowResource.replace(resourcePrefix, ""), request.getRequestURI());
+                        WebUtil.matchPatten(flowResource.replace(resourcePrefix, ""), request.getRequestURI());
                 if (matched != null){
                     // 匹配到了
                     return flowResource;

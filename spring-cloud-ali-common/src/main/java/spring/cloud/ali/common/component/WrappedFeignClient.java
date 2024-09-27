@@ -165,7 +165,7 @@ public class WrappedFeignClient implements Client {
             if (degradeResource.contains("{")){
                 // feign#ali-user#GET#/users/{userId} -> /users/{userId}
                 String fmtDegradeResource = degradeResource.replace(resourcePrefix + reqMethod + RESOURCE_SPLITTER, "");
-                PathPattern.PathMatchInfo matched = WebUtil.matchUri(fmtDegradeResource, reqUri);
+                PathPattern.PathMatchInfo matched = WebUtil.matchPatten(fmtDegradeResource, reqUri);
                 if (matched != null){
                     // 匹配到了
                     return degradeResource;

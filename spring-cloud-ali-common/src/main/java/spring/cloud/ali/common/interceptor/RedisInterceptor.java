@@ -75,32 +75,40 @@ public class RedisInterceptor implements MethodInterceptor {
     @Override
     public Object invoke(@Nonnull MethodInvocation invocation) throws Throwable {
 
-        String operationFor = invocation.getMethod().getName();
+        String opsForName = invocation.getMethod().getName();
 
         // 拦截指定操作集
-        switch (operationFor) {
+        switch (opsForName) {
             case "opsForValue":
             case "opsForSet":
+            case "opsForZSet":
             case "opsForHash":
             case "opsForList":
-                return getOperationProxy(Objects.requireNonNull(invocation.proceed()));
+                return getOperationProxy(Objects.requireNonNull(invocation.proceed()), opsForName);
         }
 
         return invocation.proceed();
     }
 
-    public <T> T getOperationProxy(Object opt) {
-        return (T) operationProxies.computeIfAbsent(opt.getClass(), clazz -> createOperationProxy(opt));
+    public <T> T getOperationProxy(Object opt, String opsForName) {
+        return (T) operationProxies.computeIfAbsent(opt.getClass(), clazz -> createOperationProxy(opt, opsForName));
     }
 
-    private <T> T createOperationProxy(T target) {
+    private <T> T createOperationProxy(T target, String opsForName) {
         ProxyFactory proxyFactory = new ProxyFactory();
         proxyFactory.setTarget(target);
-        proxyFactory.addAdvice(new RedisOperationInterceptor());
+        String fmtOpsName = opsForName.replace("opsFor", "").toLowerCase();
+        proxyFactory.addAdvice(new RedisOperationInterceptor(fmtOpsName));
         return (T) proxyFactory.getProxy();
     }
 
     class RedisOperationInterceptor implements MethodInterceptor{
+
+        private final String opsForName;
+
+        public RedisOperationInterceptor(String opsForName) {
+            this.opsForName = opsForName;
+        }
 
         @Nullable
         @Override
@@ -112,7 +120,7 @@ public class RedisInterceptor implements MethodInterceptor {
             }
 
             Entry sentinelEntry = null;
-            String resource = resolveResource(invocation);
+            String resource = resolveResource(opsForName, invocation);
             try {
 
                 if(Strings.isNullOrEmpty(resource)){
@@ -139,12 +147,12 @@ public class RedisInterceptor implements MethodInterceptor {
         }
     }
 
-    private String resolveResource(MethodInvocation invocation) {
+    private String resolveResource(String opsForName, MethodInvocation invocation) {
 
         String optName = invocation.getMethod().getName();
         String optKey = (String) invocation.getArguments()[0];
 
-        String resourcePrefix = RESOURCE_PREFIX + RESOURCE_SPLITTER;
+        String resourcePrefix = RESOURCE_PREFIX + RESOURCE_SPLITTER + opsForName + RESOURCE_SPLITTER;
         String optNameKey = optName + RESOURCE_SPLITTER + optKey;
         String resource = resourcePrefix + optNameKey;
         if (degradeRuleMap.containsKey(resource)){
@@ -155,9 +163,9 @@ public class RedisInterceptor implements MethodInterceptor {
         // 尝试模式匹配，如users:123 -> users:{id}
         for (String degradeResource : degradeRuleMap.keySet()){
             if (degradeResource.contains("{")){
-                // redis#get#users:{userId} -> get#users:{userId}
+                // redis#value#get#users:{userId} -> get#users:{userId}
                 String fmtDegradeResource = degradeResource.replace(resourcePrefix, "");
-                PathPattern.PathMatchInfo matched = WebUtil.matchUri(fmtDegradeResource, optNameKey);
+                PathPattern.PathMatchInfo matched = WebUtil.matchPatten(fmtDegradeResource, optNameKey);
                 if (matched != null){
                     // 匹配到了
                     return degradeResource;

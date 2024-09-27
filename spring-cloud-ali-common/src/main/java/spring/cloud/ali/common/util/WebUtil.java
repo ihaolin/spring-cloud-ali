@@ -13,11 +13,11 @@ public class WebUtil {
     /**
      * 匹配uri
      * @param pattern 匹配模式，如/users/{userId}
-     * @param uri 请求uri，如/users/123
+     * @param path 请求uri，如/users/123
      * @return 匹配结果，非空表示匹配成功
      */
-    public static PathPattern.PathMatchInfo matchUri(String pattern, String uri){
+    public static PathPattern.PathMatchInfo matchPatten(String pattern, String path){
         return PATH_PARSER.parse(pattern)
-                        .matchAndExtract(PathContainer.parsePath(uri));
+                        .matchAndExtract(PathContainer.parsePath(path));
     }
 }

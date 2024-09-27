@@ -184,7 +184,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
         for(String resource : resources){
             if (resource.contains("{")){
                 PathPattern.PathMatchInfo matched =
-                        WebUtil.matchUri(resource.replace(resourcePrefix, ""), requestPath);
+                        WebUtil.matchPatten(resource.replace(resourcePrefix, ""), requestPath);
                 if (matched != null){
                     // 匹配到了
                     return resource;
