@@ -25,7 +25,7 @@ public class RocketMQProducer {
 
     @PostConstruct
     public void onInit() throws MQClientException {
-        DefaultMQProducer producer = new DefaultMQProducer(producerGroup);
+        DefaultMQProducer producer = new DefaultMQProducer(producerGroup, true);
         producer.setNamesrvAddr(nameServer);
         producer.start();
         delegate = producer;

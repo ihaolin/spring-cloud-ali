@@ -31,7 +31,7 @@ public abstract class RocketMQConsumer<T> {
 
     @PostConstruct
     public void onInit() throws MQClientException {
-        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(group());
+        DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(group(), true);
         consumer.setNamesrvAddr(nameServer);
 
         consumer.subscribe(topic(), "");
