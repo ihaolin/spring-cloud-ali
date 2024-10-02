@@ -3,11 +3,12 @@ package spring.cloud.ali.common.component;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.messaging.support.MessageBuilder;
+import spring.cloud.ali.common.util.JsonUtil;
 
 import javax.annotation.Resource;
 
 @Slf4j
-public class MessageProducer {
+public class RocketMQProducer {
 
     @Resource
     private RocketMQTemplate template;
@@ -18,8 +19,8 @@ public class MessageProducer {
      * @param key       消息Key（用于去重、定位消息）
      * @param message   消息内容
      */
-    public boolean send(String topic, String key, String message) {
-        template.send(topic, MessageBuilder.withPayload(message)
+    public boolean send(String topic, String key, Object message) {
+        template.send(topic, MessageBuilder.withPayload(JsonUtil.toJson(message))
                 .setHeader("KEYS", key)
                 .build());
         return true;

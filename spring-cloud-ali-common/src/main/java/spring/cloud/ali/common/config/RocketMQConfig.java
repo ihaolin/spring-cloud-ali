@@ -4,7 +4,7 @@ import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import spring.cloud.ali.common.component.MessageProducer;
+import spring.cloud.ali.common.component.RocketMQProducer;
 
 public class RocketMQConfig {
 
@@ -15,8 +15,8 @@ public class RocketMQConfig {
     private String producerGroup;
 
     @Bean
-    public MessageProducer messageProducer(){
-        return new MessageProducer();
+    public RocketMQProducer rocketMQProducer(){
+        return new RocketMQProducer();
     }
 
     @Bean
