@@ -29,6 +29,7 @@ public class BizException extends RuntimeException {
     public static final BizException SERVICE_TIMEOUT = new BizException(504, "service.timeout");
 
     // 1001 ~ 2000：用户异常
+    public static final BizException USER_NOT_FOUND = new BizException(1001, "user.not.found");
 
     // 2001 ~ 3000：订单异常
 
