@@ -12,6 +12,7 @@ import spring.cloud.ali.common.util.JsonUtil;
 
 import javax.annotation.PostConstruct;
 import java.lang.reflect.ParameterizedType;
+import java.nio.charset.StandardCharsets;
 
 import static org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 
@@ -46,7 +47,7 @@ public abstract class RocketMQConsumer<T> {
                     continue;
                 }
                 try {
-                    String msgBody = new String(message.getBody());
+                    String msgBody = new String(message.getBody(), StandardCharsets.UTF_8);
                     T msg = JsonUtil.toObject(msgBody, msgType);
                     log.info("message consume start: {}", msg);
                     boolean result = consume(msg);
