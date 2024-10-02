@@ -23,6 +23,7 @@ public class RocketMQProducer {
         template.send(topic, MessageBuilder.withPayload(JsonUtil.toJson(message))
                 .setHeader("KEYS", key)
                 .build());
+        log.info("message produce: topic={}, key={}, message={}", topic, key, message);
         return true;
     }
 }
