@@ -15,12 +15,14 @@ import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static spring.cloud.ali.common.exception.BizException.PATH_NOT_FOUND;
 import static spring.cloud.ali.common.exception.BizException.REQUEST_TOO_MANY;
 import static spring.cloud.ali.common.exception.BizException.SERVER_INTERNAL_ERROR;
 import static spring.cloud.ali.common.exception.BizException.SERVICE_ERROR;
 import static spring.cloud.ali.common.exception.BizException.SERVICE_NOT_UNAVAILABLE;
 import static spring.cloud.ali.common.exception.BizException.SERVICE_TIMEOUT;
+import static spring.cloud.ali.common.exception.BizException.UN_AUTH;
 
 /**
  * HTTP异常响应消息枚举
@@ -28,6 +30,7 @@ import static spring.cloud.ali.common.exception.BizException.SERVICE_TIMEOUT;
 @Getter
 public enum HttpRespStatus {
 
+    HTTP_NOT_AUTH(UNAUTHORIZED, json(UN_AUTH), false),
     HTTP_NOT_FOUND(NOT_FOUND, json(PATH_NOT_FOUND), false),
     HTTP_REQUEST_TOO_MANY(TOO_MANY_REQUESTS, json(REQUEST_TOO_MANY), false),
     HTTP_BAD_GATEWAY(BAD_GATEWAY, json(SERVICE_ERROR), true),

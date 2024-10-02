@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 import spring.cloud.ali.common.component.WrappedFeignClient;
 import spring.cloud.ali.common.component.SentinelConfigService;
+import spring.cloud.ali.common.interceptor.LoginInterceptor;
 import spring.cloud.ali.common.interceptor.WebInterceptor;
 
 public class CommonConfig {
@@ -32,5 +33,10 @@ public class CommonConfig {
     @Bean
     public WebInterceptor webInterceptor() {
         return new WebInterceptor();
+    }
+
+    @Bean
+    public LoginInterceptor loginInterceptor(){
+        return new LoginInterceptor();
     }
 }

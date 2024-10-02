@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.SecureDigestAlgorithm;
 
 import javax.crypto.SecretKey;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -53,5 +54,9 @@ public class JwtTokenUtil {
                 .verifyWith(Keys.hmacShaKeyFor(signKey.getBytes()))
                 .build()
                 .parseSignedClaims(token).getPayload();
+    }
+
+    public static String generateSignKey(){
+        return Base64.getEncoder().encodeToString(Jwts.SIG.HS256.key().build().getEncoded());
     }
 }

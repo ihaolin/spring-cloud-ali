@@ -18,6 +18,7 @@ public class BizException extends RuntimeException {
 
     // 1 ~ 1000：通用异常
     public static final BizException RESPONSE_DATA_ERROR = new BizException(400, "response.data.error");
+    public static final BizException UN_AUTH = new BizException(401, "un.auth");
     public static final BizException PATH_NOT_FOUND = new BizException(404, "page.not.found");
     public static final BizException DATA_NOT_FOUND = new BizException(405, "data.not.found");
     public static final BizException REQUEST_TOO_MANY = new BizException(429, "request.too.many");
