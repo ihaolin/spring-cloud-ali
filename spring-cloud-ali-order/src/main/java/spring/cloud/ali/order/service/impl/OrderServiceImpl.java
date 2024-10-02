@@ -5,9 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import spring.cloud.ali.common.component.RocketMQProducer;
+import spring.cloud.ali.common.context.LoginUser;
 import spring.cloud.ali.common.dto.HttpResult;
+import spring.cloud.ali.order.config.AppConfig;
 import spring.cloud.ali.order.mapper.OrderMapper;
 import spring.cloud.ali.order.model.Order;
+import spring.cloud.ali.order.mq.OrderMessage;
+import spring.cloud.ali.order.request.CreateOrderRequest;
 import spring.cloud.ali.order.result.OrderDetailResult;
 import spring.cloud.ali.order.service.OrderService;
 import spring.cloud.ali.user.api.UserHttpService;
@@ -27,6 +32,12 @@ public class OrderServiceImpl implements OrderService {
 
     @Resource
     private UserHttpService userHttpService;
+
+    @Resource
+    private RocketMQProducer producer;
+
+    @Resource
+    private AppConfig appConfig;
 
     @Override
     public OrderDetailResult queryUserOrder(String userName, String orderNo) {
@@ -54,6 +65,7 @@ public class OrderServiceImpl implements OrderService {
         }
         OrderDetailResult odr = new OrderDetailResult();
         BeanUtils.copyProperties(order, odr);
+
         return odr;
     }
 
@@ -84,5 +96,15 @@ public class OrderServiceImpl implements OrderService {
             BeanUtils.copyProperties(order, odr);
             return odr;
         });
+    }
+
+    @Override
+    public Boolean createOrder(LoginUser login, CreateOrderRequest req) {
+
+        String orderNo = appConfig.getOrderNoPrefix() + System.currentTimeMillis();
+
+        producer.send("ali-order-topic", orderNo, new OrderMessage(login.getId(), orderNo));
+
+        return Boolean.TRUE;
     }
 }
