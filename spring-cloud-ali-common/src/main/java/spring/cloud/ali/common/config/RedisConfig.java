@@ -8,16 +8,18 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import spring.cloud.ali.common.interceptor.RedisInterceptor;
 
-import javax.annotation.Resource;
-
 public class RedisConfig {
 
-    @Resource
-    private RedisInterceptor redisInterceptor;
+    @Bean
+    public RedisInterceptor redisInterceptor(){
+        return new RedisInterceptor();
+    }
 
     @SuppressWarnings("unchecked")
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory connectionFactory,
+            RedisInterceptor redisInterceptor) {
 
         // 创建 RedisTemplate 实例
         RedisTemplate<String, Object> template = new RedisTemplate<>();
@@ -37,4 +39,6 @@ public class RedisConfig {
         // 返回代理后的 RedisTemplate
         return (RedisTemplate<String, Object>) factory.getProxy();
     }
+
+
 }

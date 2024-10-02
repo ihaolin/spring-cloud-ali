@@ -5,7 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.client.RestTemplate;
 import spring.cloud.ali.common.component.WrappedFeignClient;
 import spring.cloud.ali.common.component.SentinelConfigService;
-import spring.cloud.ali.common.interceptor.RedisInterceptor;
 import spring.cloud.ali.common.interceptor.WebInterceptor;
 
 public class CommonConfig {
@@ -33,10 +32,5 @@ public class CommonConfig {
     @Bean
     public WebInterceptor webInterceptor() {
         return new WebInterceptor();
-    }
-
-    @Bean
-    public RedisInterceptor redisInterceptor(){
-        return new RedisInterceptor();
     }
 }
