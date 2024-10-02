@@ -13,11 +13,6 @@ public class OrderConsumer extends RocketMQConsumer<OrderMessage> {
     }
 
     @Override
-    protected String groupPrefix() {
-        return "ali-user-order";
-    }
-
-    @Override
     protected boolean consume(OrderMessage message) {
 
         return true;

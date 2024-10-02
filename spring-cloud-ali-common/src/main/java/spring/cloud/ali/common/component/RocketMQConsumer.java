@@ -22,6 +22,9 @@ public abstract class RocketMQConsumer<T> {
     private final Class<T> msgType =
             (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
 
+    @Value("${spring.application.name}")
+    private String appName;
+
     @Value("${spring.rocketmq.name-server}")
     private String nameServer;
 
@@ -69,14 +72,13 @@ public abstract class RocketMQConsumer<T> {
      */
     protected abstract String topic();
 
-    public String group(){
-        return groupPrefix() + "-consumer-group";
-    }
-
     /**
-     * 消费者组前缀名
+     * 消费者组名
+     * @return {appName}-{topicName}-consumer-group
      */
-    protected abstract String groupPrefix();
+    public String group(){
+        return appName + "-" + topic() + "-consumer-group";
+    }
 
     /**
      * 消费消息
