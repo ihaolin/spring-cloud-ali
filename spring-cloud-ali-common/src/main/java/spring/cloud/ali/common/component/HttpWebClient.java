@@ -10,6 +10,7 @@ import spring.cloud.ali.common.dto.HttpResult;
 
 import javax.annotation.Resource;
 
+import java.util.Collections;
 import java.util.Map;
 
 import static spring.cloud.ali.common.exception.BizException.SERVICE_NOT_UNAVAILABLE;
@@ -18,7 +19,7 @@ import static spring.cloud.ali.common.exception.BizException.SERVICE_NOT_UNAVAIL
  * HTTP负载调用客户端（内部服务使用）
  * 推荐使用@FeignClient
  */
-public class HttpLoadBalancerClient {
+public class HttpServiceClient {
 
     private static final String HTTP = "http:";
 
@@ -44,6 +45,9 @@ public class HttpLoadBalancerClient {
         // Remove the trailing "&"
         String finalUrl = urlWithParams.toString().replaceAll("&$", "");
 
+        if (headers == null){
+            headers = Collections.emptyMap();
+        }
         HttpEntity<?> httpEntity = new HttpEntity<>(headers);
 
         return restTemplate.exchange(finalUrl,
