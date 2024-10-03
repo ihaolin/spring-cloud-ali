@@ -7,9 +7,9 @@ import spring.cloud.ali.order.result.OrderDetailResult;
 
 public interface OrderService {
 
-    OrderDetailResult queryUserOrder(String userName, String orderNo);
+    OrderDetailResult queryUserOrder(LoginUser login, String orderNo);
 
-    IPage<OrderDetailResult> pagingUserOrders(Long userId, Integer pageNo);
+    IPage<OrderDetailResult> pagingUserOrders(LoginUser login, Integer pageNo);
 
     Boolean createOrder(LoginUser login, CreateOrderRequest req);
 }

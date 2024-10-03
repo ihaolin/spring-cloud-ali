@@ -9,4 +9,5 @@ public class OrderDetailResult {
 
     private String orderNo;
 
+    private String userName;
 }

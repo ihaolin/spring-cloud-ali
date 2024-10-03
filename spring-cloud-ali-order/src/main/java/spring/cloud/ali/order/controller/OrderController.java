@@ -28,16 +28,12 @@ public class OrderController {
     }
 
     @GetMapping(value = "/detail")
-    public HttpResult<OrderDetailResult> queryOrderDetail(
-            @RequestParam String userName, @RequestParam String orderNo) throws InterruptedException {
-        // Thread.sleep(1000000);
-        return HttpResult.success(orderService.queryUserOrder(userName, orderNo));
+    public HttpResult<OrderDetailResult> queryOrderDetail(@RequestParam String orderNo) {
+        return HttpResult.success(orderService.queryUserOrder(LoginContext.get(), orderNo));
     }
 
     @GetMapping(value = "/paging")
-    public HttpResult<IPage<OrderDetailResult>> pagingOrders(
-            @RequestParam Long userId, @RequestParam Integer pageNo) throws InterruptedException {
-        // Thread.sleep(1000000);
-        return HttpResult.success(orderService.pagingUserOrders(userId, pageNo));
+    public HttpResult<IPage<OrderDetailResult>> pagingOrders(@RequestParam Integer pageNo) {
+        return HttpResult.success(orderService.pagingUserOrders(LoginContext.get(), pageNo));
     }
 }

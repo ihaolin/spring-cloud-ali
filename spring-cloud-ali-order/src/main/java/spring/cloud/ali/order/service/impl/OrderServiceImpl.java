@@ -40,10 +40,10 @@ public class OrderServiceImpl implements OrderService {
     private AppConfig appConfig;
 
     @Override
-    public OrderDetailResult queryUserOrder(String userName, String orderNo) {
+    public OrderDetailResult queryUserOrder(LoginUser login, String orderNo) {
 
         // 通过FeignClient调用远端
-        HttpResult<UserDetailResult> userRes = userHttpService.queryUserByName(userName);
+        HttpResult<UserDetailResult> userRes = userHttpService.queryUserById(login.getId());
         if(userRes == null){
             throwRespDataError();
         }
@@ -66,14 +66,16 @@ public class OrderServiceImpl implements OrderService {
         OrderDetailResult odr = new OrderDetailResult();
         BeanUtils.copyProperties(order, odr);
 
+        odr.setUserName(user.getUsername());
+
         return odr;
     }
 
     @Override
-    public IPage<OrderDetailResult> pagingUserOrders(Long userId, Integer pageNo) {
+    public IPage<OrderDetailResult> pagingUserOrders(LoginUser login, Integer pageNo) {
 
         // 通过FeignClient调用远端
-        HttpResult<UserDetailResult> userRes = userHttpService.queryUserById(userId);
+        HttpResult<UserDetailResult> userRes = userHttpService.queryUserById(login.getId());
         if(userRes == null){
             throwRespDataError();
         }
@@ -85,7 +87,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         QueryWrapper<Order> q = new QueryWrapper<>();
-        q.eq("user_id", userId);
+        q.eq("user_id", login.getId());
         Page<Order> paging = new Page<>();
         paging.setCurrent(pageNo);
         paging.setSize(10);
