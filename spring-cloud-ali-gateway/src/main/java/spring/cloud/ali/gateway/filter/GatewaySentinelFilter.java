@@ -207,8 +207,6 @@ public class GatewaySentinelFilter implements GlobalFilter {
         for (RouteDefinition route : routes){
             initAppRules(route.getId());
         }
-
-        log.info("initAllAppRules finished: {}", allAppRules);
     }
 
     /**
@@ -273,6 +271,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
                     allAppRules.put(routeId, routeRules);
                 }
                 routeRules.setFlows(refreshed.stream().collect(Collectors.toMap(FlowRule::getResource, r -> r)));
+                log.info("sentinel flow rules refreshed: routeId={}, rules={}", routeId, routeRules.getFlows());
             }
         });
 
@@ -293,6 +292,7 @@ public class GatewaySentinelFilter implements GlobalFilter {
                     allAppRules.put(routeId, routeRules);
                 }
                 routeRules.setDegrades(refreshed.stream().collect(Collectors.toMap(DegradeRule::getResource, r -> r)));
+                log.info("sentinel degrade rules refreshed: routeId={}, rules={}", routeId, routeRules.getDegrades());
             }
         });
 

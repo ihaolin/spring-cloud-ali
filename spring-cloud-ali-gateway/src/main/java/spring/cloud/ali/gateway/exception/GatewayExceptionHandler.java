@@ -19,6 +19,7 @@ import spring.cloud.ali.common.util.JsonUtil;
 import java.nio.charset.StandardCharsets;
 
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR;
+import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_NOT_FOUND;
 
 /**
  * 全局错误处理（针对后端服务的错误响应）
@@ -39,7 +40,8 @@ public class GatewayExceptionHandler implements WebExceptionHandler {
         String msg = HttpRespStatus.DEFAULT.getMsg();
         Route route = exchange.getAttribute(GATEWAY_ROUTE_ATTR);
         if(route == null){
-            return respError(resp, msg);
+            // 没有路由404
+            return respError(resp, HTTP_NOT_FOUND.getMsg());
         }
 
         if (e instanceof BizException){
