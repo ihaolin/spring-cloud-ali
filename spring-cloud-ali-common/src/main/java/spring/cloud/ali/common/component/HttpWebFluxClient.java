@@ -10,14 +10,14 @@ import spring.cloud.ali.common.dto.HttpResult;
 import java.util.Map;
 
 /**
- * Http WebFlux Client（gateway等应用强制使用）
+ * Http WebFlux Client（异步调用，gateway等应用强制使用）
  */
 @Slf4j
-public class HttpWebClient {
+public class HttpWebFluxClient {
 
     private final WebClient webClient;
 
-    public HttpWebClient(WebClient webClient) {
+    public HttpWebFluxClient(WebClient webClient) {
         this.webClient = webClient;
     }
 

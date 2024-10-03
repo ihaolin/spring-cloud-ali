@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.user.result.UserDetailResult;
 import spring.cloud.ali.user.result.UserLoginResult;
+import spring.cloud.ali.user.result.VerifyTokenResult;
 import spring.cloud.ali.user.service.UserService;
 
 import javax.annotation.Resource;
@@ -20,8 +21,14 @@ public class UserController {
     private UserService userService;
 
     @GetMapping(value = "/login")
-    public HttpResult<UserLoginResult> login(@RequestParam String userName){
-        return HttpResult.success(userService.login(userName));
+    public HttpResult<UserLoginResult> login(
+            @RequestParam String userName, @RequestParam String password){
+        return HttpResult.success(userService.login(userName, password));
+    }
+
+    @GetMapping(value = "/verify-token")
+    public HttpResult<VerifyTokenResult> verifyToken(@RequestParam String token){
+        return HttpResult.success(userService.verifyToken(token));
     }
 
     @GetMapping(value = "/detail")

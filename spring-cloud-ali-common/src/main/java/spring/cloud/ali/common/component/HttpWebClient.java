@@ -16,10 +16,10 @@ import java.util.Map;
 import static spring.cloud.ali.common.exception.BizException.SERVICE_NOT_UNAVAILABLE;
 
 /**
- * HTTP负载调用客户端（内部服务使用）
+ * HTTP负载调用客户端（同步阻塞）
  * 推荐使用@FeignClient
  */
-public class HttpServiceClient {
+public class HttpWebClient {
 
     private static final String HTTP = "http:";
 

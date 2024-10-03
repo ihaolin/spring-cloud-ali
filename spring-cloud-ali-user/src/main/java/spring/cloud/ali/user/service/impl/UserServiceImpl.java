@@ -2,6 +2,8 @@ package spring.cloud.ali.user.service.impl;
 
 import com.alibaba.nacos.shaded.com.google.common.collect.ImmutableMap;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.google.common.base.Strings;
+import io.jsonwebtoken.Claims;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -12,13 +14,17 @@ import spring.cloud.ali.user.mapper.UserMapper;
 import spring.cloud.ali.user.model.User;
 import spring.cloud.ali.user.result.UserDetailResult;
 import spring.cloud.ali.user.result.UserLoginResult;
+import spring.cloud.ali.user.result.VerifyTokenResult;
 import spring.cloud.ali.user.service.UserService;
 
 import javax.annotation.Resource;
+import java.util.Date;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static spring.cloud.ali.common.context.LoginContext.HTTP_HEADER_LOGIN_USER_ID;
-import static spring.cloud.ali.common.exception.BizException.USER_NOT_FOUND;
+import static spring.cloud.ali.common.exception.BizException.USER_PWD_ERROR;
+import static spring.cloud.ali.user.result.VerifyTokenResult.NOT_PASS;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -33,20 +39,38 @@ public class UserServiceImpl implements UserService {
     private AppConfig appConfig;
 
     @Override
-    public UserLoginResult login(String userName) {
+    public UserLoginResult login(String userName, String password) {
 
-        UserDetailResult user = queryUserByName(userName);
-        if (user == null){
-            throw USER_NOT_FOUND;
+        QueryWrapper<User> q = new QueryWrapper<>();
+        q.eq("username", userName);
+        User user = userMapper.selectOne(q);
+
+        if (user == null || !Objects.equals(password, user.getPassword())){
+            throw USER_PWD_ERROR;
         }
 
         String token = JwtTokenUtil.generate(appConfig.getLoginSignKey(),
-                ImmutableMap.of(HTTP_HEADER_LOGIN_USER_ID, user.getId()), 3600 * 24 * 30);
+                ImmutableMap.of(HTTP_HEADER_LOGIN_USER_ID, String.valueOf(user.getId())), 3600 * 24 * 30);
 
         UserLoginResult loginResult = new UserLoginResult();
         loginResult.setToken(token);
 
         return loginResult;
+    }
+
+    @Override
+    public VerifyTokenResult verifyToken(String token) {
+        Claims claims = JwtTokenUtil.parse(appConfig.getLoginSignKey(), token);
+        if (claims == null || claims.getExpiration().before(new Date())){
+            return NOT_PASS;
+        }
+
+        String loginUserId = claims.get(HTTP_HEADER_LOGIN_USER_ID, String.class);
+        if (Strings.isNullOrEmpty(loginUserId)){
+            return NOT_PASS;
+        }
+
+        return new VerifyTokenResult(true, Long.valueOf(loginUserId));
     }
 
     @Override
