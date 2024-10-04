@@ -143,13 +143,12 @@ public class GatewaySentinelFilter implements GlobalFilter {
 
                         return resp.writeWith(Mono.just(
                                 resp.bufferFactory().wrap(DEFAULT.getMsg().getBytes(StandardCharsets.UTF_8))));
-                    }).then(Mono.defer(() -> {
+                    }).doOnTerminate(() -> {
                         if (entry != null) {
                             entry.exit();
                         }
                         ContextUtil.exit();
-                        return Mono.empty();
-                    }));
+                    }).then();
         } catch (BlockException e){
             HttpRespStatus rs = e instanceof FlowException ? HTTP_REQUEST_TOO_MANY : DEFAULT;
             log.error("api request blocked: resource={}, rule={}", resource, e.getRule());
@@ -157,6 +156,8 @@ public class GatewaySentinelFilter implements GlobalFilter {
                     rs.getMsg().getBytes(StandardCharsets.UTF_8))));
         } catch (Throwable e){
             log.error("unknown exception: resource={}, error={}", resource, Throwables.getStackTraceAsString(e));
+        } finally {
+            ContextUtil.exit();
         }
 
         return resp.writeWith(Mono.just(

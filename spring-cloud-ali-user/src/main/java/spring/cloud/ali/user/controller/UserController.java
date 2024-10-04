@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import spring.cloud.ali.common.context.LoginContext;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.user.result.UserDetailResult;
 import spring.cloud.ali.user.result.UserLoginResult;
@@ -32,8 +33,8 @@ public class UserController {
     }
 
     @GetMapping(value = "/detail")
-    public HttpResult<UserDetailResult> queryUserByName(@RequestParam String userName){
-        return HttpResult.success(userService.queryUserByName(userName));
+    public HttpResult<UserDetailResult> queryUserByName(){
+        return HttpResult.success(userService.queryUserById(LoginContext.get().getId()));
     }
 
     @GetMapping(value = "/{userId}")
