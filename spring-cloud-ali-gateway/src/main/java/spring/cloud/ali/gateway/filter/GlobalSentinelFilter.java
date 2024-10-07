@@ -61,7 +61,7 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
-public class GatewaySentinelFilter implements GlobalFilter {
+public class GlobalSentinelFilter implements GlobalFilter {
 
     private static final String SENTINEL_CTX = "_sentinel_gateway_ctx_";
 

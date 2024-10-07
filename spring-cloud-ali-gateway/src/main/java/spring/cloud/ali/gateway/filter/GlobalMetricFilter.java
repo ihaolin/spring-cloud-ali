@@ -21,14 +21,14 @@ import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.G
 @Slf4j
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE + 1)
-public class RequestMetricFilter implements GlobalFilter {
+public class GlobalMetricFilter implements GlobalFilter {
 
     private static final String METRIC_PREFIX = "ali_gateway_requests";
 
     private final MeterRegistry meterRegistry;
 
     @Autowired
-    public RequestMetricFilter(MeterRegistry meterRegistry) {
+    public GlobalMetricFilter(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
     }
 
