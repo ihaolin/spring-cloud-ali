@@ -31,7 +31,7 @@ public class MyBatisTraceInterceptor implements Interceptor {
     @Override
     public Object intercept(Invocation invocation) throws Throwable {
 
-        Span mybatisSpan = tracer.nextSpan().start().name("mybatis");
+        Span mybatisSpan = tracer.nextSpan().start().name("mybatis").remoteServiceName("mysql");
 
         if (mybatisSpan != null) {
 
@@ -44,7 +44,6 @@ public class MyBatisTraceInterceptor implements Interceptor {
             MappedStatement mappedStatement = (MappedStatement) metaObject.getValue("delegate.mappedStatement");
             mybatisSpan.tag("id", mappedStatement.getId());
             mybatisSpan.tag("sql", statementHandler.getBoundSql().getSql());
-
             mybatisSpan.event("Prepare statement end");
 
             mybatisSpan.event("Execute statement start");
