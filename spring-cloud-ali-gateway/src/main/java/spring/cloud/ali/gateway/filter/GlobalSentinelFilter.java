@@ -127,27 +127,35 @@ public class GlobalSentinelFilter implements GlobalFilter {
                 return chain.filter(exchange);
             }
 
-            Context sentinelCtx = ContextUtil.enter(SENTINEL_CTX);
             Entry entry = SphU.entry(resource);
             return chain.filter(exchange)
+                    .contextWrite(ctx -> ctx.put(Context.class, ContextUtil.getContext()))
+                    .contextWrite(ctx -> ctx.put(Entry.class, entry))
                     .onErrorResume(e -> {
+
+                        Context ctxSentinelContext = exchange.getAttribute(Context.class.getName());
+                        Entry ctxEntry = exchange.getAttribute(Entry.class.getName());
 
                         if (e instanceof ResponseStatusException){
                             ResponseStatusException rse = (ResponseStatusException) e;
                             if (HttpRespStatus.isServiceUnAvailable(rse.getStatus())){
                                 // 异常埋点统计
-                                ContextUtil.runOnContext(sentinelCtx, () -> Tracer.traceEntry(e, entry));
-                                log.warn("resource {} isn't available, trace entry: {}", resource, entry);
+                                ContextUtil.runOnContext(ctxSentinelContext, () -> Tracer.traceEntry(e, ctxEntry));
+                                log.warn("resource {} isn't available, trace entry: {}", resource, ctxEntry);
                             }
                         }
 
                         return resp.writeWith(Mono.just(
                                 resp.bufferFactory().wrap(DEFAULT.getMsg().getBytes(StandardCharsets.UTF_8))));
-                    }).doOnTerminate(() -> {
-                        if (entry != null) {
-                            entry.exit();
+                    }).doFinally((s) -> {
+
+                        Entry ctxEntry = exchange.getAttribute(Entry.class.getName());
+                        if (ctxEntry != null) {
+                            ctxEntry.exit();
                         }
+
                         ContextUtil.exit();
+
                     }).then();
         } catch (BlockException e){
             HttpRespStatus rs = e instanceof FlowException ? HTTP_REQUEST_TOO_MANY : DEFAULT;
