@@ -277,7 +277,7 @@ public class ComponentConfig {
 
 #### 4.5.1 网关流控
 
-> 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现：
+> 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现：
 
 + 流控规则文件配置：
 
@@ -432,13 +432,90 @@ public interface UserHttpService {
 
 ### 4.7 监控报警
 
+> 监控主要基于**Spring Boot Actuator**及**Micrometer**（集成）、**Prometheus**（采集）、**Grafana**（可视化&报警），主要覆盖**系统监控**、**JVM监控**、**接口监控**、**日志监控**、**业务监控**等
+
+#### 4.7.1 监控集成
+
+1. 引入actuator和micrometer依赖：
+
+   ```xml
+    <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-actuator</artifactId>
+   </dependency>
+   <dependency>
+       <groupId>io.micrometer</groupId>
+       <artifactId>micrometer-registry-prometheus</artifactId>
+   </dependency>
+   ```
+
+2. 开启指标配置：
+
+   > [!WARNING]
+   >
+   > 为确保端口访问安全，应结合Spring Security增加账号或IP访问安全策略！
+
+   ```yaml
+   management:
+     endpoints:
+       web:
+         exposure:
+           include: "*"
+     endpoint:
+       health:
+         show-details: always
+     metrics:
+       enable:
+         all: true
+       tags:
+         enabled: true
+       export:
+         prometheus:
+           enabled: true
+   ```
+
+3. 确保启动`prometheus`后，配置targets：
+
+   > [!WARNING]
+   >
+   > 对于服务实例较多的场景，应结合服务注册中心，实现自动化采集
+
+   ```yml
+   global:
+     scrape_interval: 15s
+     evaluation_interval: 15s
+   
+   scrape_configs:
+     - job_name: "prometheus"
+       static_configs:
+         - targets: ["localhost:9090"]
+     - job_name: "ali-gateway"
+       metrics_path: '/actuator/prometheus'
+       static_configs:
+         - targets: ["localhost:8888"]
+     - job_name: "ali-user"
+       metrics_path: '/actuator/prometheus'
+       static_configs:
+         - targets: ["localhost:8001"]
+     - job_name: "ali-order"
+       metrics_path: '/actuator/prometheus'
+       static_configs:
+         - targets: ["localhost:8002"]
+   ```
+
+4. 确保启动`grafana`后，并配置`prometheus`数据源后，便可配置Dashboard和Panel，可参考该配置文件[grafana-ali-gateway-dashboard.json](doc/grafana-ali-gateway-dashboard.json)（建议先统一监控模板规则，应用到不同微服务即可）
+
+5. 对于自定义指标，只需注入`MeterRegistry`进行指标统计，可参考[GlobalMetricFilter](spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalMetricFilter.java)。
+
+### 4.8 链路跟踪
 
 
-### 4.8 系统压测
+
+### 4.9 系统压测
 
 
 
-### 4.9 系统诊断
+### 4.10 系统诊断
 
 
 

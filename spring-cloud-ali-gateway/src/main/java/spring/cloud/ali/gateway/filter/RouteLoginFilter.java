@@ -12,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 import spring.cloud.ali.common.component.HttpWebFluxClient;
@@ -76,6 +77,12 @@ public class RouteLoginFilter extends AbstractGatewayFilterFactory<RouteLoginFil
                     })
                     .onErrorResume(e -> {
                         log.error("unknown exception: reqUri={}, error={}", reqUri, Throwables.getStackTraceAsString(e));
+
+                        if (e instanceof WebClientResponseException){
+                            // TODO 用户响应异常， 降级处理
+
+                        }
+
                         return respError(exchange, HttpRespStatus.DEFAULT);
                     });
         };

@@ -4,6 +4,7 @@ import com.alibaba.nacos.shaded.com.google.common.collect.ImmutableMap;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.base.Strings;
 import io.jsonwebtoken.Claims;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,9 @@ public class UserServiceImpl implements UserService {
     @Resource
     private AppConfig appConfig;
 
+    @Resource
+    private MeterRegistry meterRegistry;
+
     @Override
     public UserLoginResult login(String userName, String password) {
 
@@ -54,6 +58,8 @@ public class UserServiceImpl implements UserService {
 
         UserLoginResult loginResult = new UserLoginResult();
         loginResult.setToken(token);
+
+        meterRegistry.counter("user_login").increment();
 
         return loginResult;
     }
