@@ -23,8 +23,9 @@ import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
 
 import static org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_SPAN_ID;
-import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_TRACE_ID;
+import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SAMPLED;
+import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SPAN_ID;
+import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_TRACE_ID;
 
 @Slf4j
 public abstract class RocketMQConsumer<T> {
@@ -54,8 +55,9 @@ public abstract class RocketMQConsumer<T> {
                 return CONSUME_SUCCESS;
             }
 
-            String traceId = messages.get(0).getUserProperty(USER_PROP_TRACE_ID);
-            String spanId = messages.get(0).getUserProperty(USER_PROP_SPAN_ID);
+            String sampled = messages.get(0).getUserProperty(USER_PROP_BRAVE_SAMPLED);
+            String traceId = messages.get(0).getUserProperty(USER_PROP_BRAVE_TRACE_ID);
+            String spanId = messages.get(0).getUserProperty(USER_PROP_BRAVE_SPAN_ID);
 
             Span consumeSpan = null;
             if (!Strings.isNullOrEmpty(traceId) && !Strings.isNullOrEmpty(spanId)){
@@ -63,7 +65,7 @@ public abstract class RocketMQConsumer<T> {
                         TraceContext.newBuilder()
                                 .traceId(Long.parseLong(traceId))
                                 .spanId(Long.parseLong(spanId))
-                                .sampled(true)
+                                .sampled(Boolean.parseBoolean(sampled))
                                 .build()
                 ).start().name("consumer").remoteServiceName("rocketmq");
             }

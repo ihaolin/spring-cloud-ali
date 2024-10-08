@@ -15,8 +15,9 @@ import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 
-import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_SPAN_ID;
-import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_TRACE_ID;
+import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SAMPLED;
+import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SPAN_ID;
+import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_TRACE_ID;
 
 @Slf4j
 public class RocketMQProducer {
@@ -56,8 +57,9 @@ public class RocketMQProducer {
         msg.setTopic(topic);
         msg.setKeys(key);
         msg.setBody(JsonUtil.toJson(message).getBytes(StandardCharsets.UTF_8));
-        msg.putUserProperty(USER_PROP_TRACE_ID, String.valueOf(produceSpan.context().traceId()));
-        msg.putUserProperty(USER_PROP_SPAN_ID, String.valueOf(produceSpan.context().spanId()));
+        msg.putUserProperty(USER_PROP_BRAVE_SAMPLED, String.valueOf(produceSpan.context().sampled()));
+        msg.putUserProperty(USER_PROP_BRAVE_TRACE_ID, String.valueOf(produceSpan.context().traceId()));
+        msg.putUserProperty(USER_PROP_BRAVE_SPAN_ID, String.valueOf(produceSpan.context().spanId()));
 
         produceSpan.tag("topic", topic);
 

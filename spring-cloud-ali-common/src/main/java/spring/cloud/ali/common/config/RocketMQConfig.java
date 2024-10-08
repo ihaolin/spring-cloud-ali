@@ -5,8 +5,9 @@ import spring.cloud.ali.common.component.RocketMQProducer;
 
 public class RocketMQConfig {
 
-    public static final String USER_PROP_TRACE_ID = "Sleuth-Trace-Id";
-    public static final String USER_PROP_SPAN_ID = "Sleuth-Span-Id";
+    public static final String USER_PROP_BRAVE_SAMPLED = "Brave-Sampled";
+    public static final String USER_PROP_BRAVE_TRACE_ID = "Brave-Trace-Id";
+    public static final String USER_PROP_BRAVE_SPAN_ID = "Brave-Span-Id";
 
     @Bean
     public RocketMQProducer rocketMQProducer(){
