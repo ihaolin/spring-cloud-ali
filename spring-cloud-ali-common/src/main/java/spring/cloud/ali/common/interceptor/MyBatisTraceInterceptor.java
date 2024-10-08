@@ -1,5 +1,7 @@
 package spring.cloud.ali.common.interceptor;
 
+import brave.Span;
+import brave.Tracer;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.plugin.Interceptor;
@@ -10,8 +12,6 @@ import org.apache.ibatis.plugin.Signature;
 import org.apache.ibatis.reflection.DefaultReflectorFactory;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
-import org.springframework.cloud.sleuth.Span;
-import org.springframework.cloud.sleuth.Tracer;
 
 import java.sql.Connection;
 
@@ -32,29 +32,26 @@ public class MyBatisTraceInterceptor implements Interceptor {
     public Object intercept(Invocation invocation) throws Throwable {
 
         Span mybatisSpan = tracer.nextSpan().start().name("mybatis").remoteServiceName("mysql");
+        if (mybatisSpan == null){
+            return invocation.proceed();
+        }
 
-        if (mybatisSpan != null) {
-
-            mybatisSpan.start();
-
-            mybatisSpan.event("Prepare statement start");
+        try {
+            mybatisSpan.annotate("Prepare statement start");
             StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
             MetaObject metaObject = MetaObject.forObject(statementHandler,
                     SystemMetaObject.DEFAULT_OBJECT_FACTORY, SystemMetaObject.DEFAULT_OBJECT_WRAPPER_FACTORY, reflectorFactory);
             MappedStatement mappedStatement = (MappedStatement) metaObject.getValue("delegate.mappedStatement");
             mybatisSpan.tag("id", mappedStatement.getId());
             mybatisSpan.tag("sql", statementHandler.getBoundSql().getSql());
-            mybatisSpan.event("Prepare statement end");
+            mybatisSpan.annotate("Prepare statement end");
 
-            mybatisSpan.event("Execute statement start");
+            mybatisSpan.annotate("Execute statement start");
             Object res = invocation.proceed();
-            mybatisSpan.event("Execute statement end");
-
-            mybatisSpan.end();
-
+            mybatisSpan.annotate("Execute statement end");
             return res;
-        } else {
-            return invocation.proceed();
+        } finally {
+            mybatisSpan.finish();
         }
     }
 

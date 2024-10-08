@@ -1,9 +1,9 @@
 package spring.cloud.ali.common.config;
 
 
+import brave.Tracer;
 import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.sleuth.Tracer;
 import spring.cloud.ali.common.interceptor.MyBatisTraceInterceptor;
 
 import java.util.List;

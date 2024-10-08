@@ -507,9 +507,39 @@ public interface UserHttpService {
 
 5. 对于自定义指标，只需注入`MeterRegistry`进行指标统计，可参考[GlobalMetricFilter](spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalMetricFilter.java)。
 
+#### 4.7.2 报警管理
+
 ### 4.8 链路跟踪
 
+> 用于分布式环境中，跟踪请求的跨系统调用路径，便于排查和依赖分析。在Spring Cloud生态中，主要基于**Spring Cloud Sleuth**和**Zipkin**来实现跟踪。（新版已迁移至[Micrometer](https://docs.micrometer.io/tracing/reference/index.html))
 
+#### 4.9.1 跟踪集成
+
+1. 引入相关依赖：
+
+   ```xml
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-starter-sleuth</artifactId>
+   </dependency>
+   <dependency>
+       <groupId>org.springframework.cloud</groupId>
+       <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+   </dependency>
+   ```
+
+2. 确保已启动`zipkin`，增加相关配置：
+
+   ```yaml
+   spring:
+     zipkin:
+       base-url: http://localhost:9411
+     sleuth:
+       sampler:
+         probability: 1.0
+   ```
+
+   
 
 ### 4.9 系统压测
 
