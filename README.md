@@ -513,7 +513,7 @@ public interface UserHttpService {
 
 > 用于分布式环境中，跟踪请求的跨系统调用路径，便于排查和依赖分析。在Spring Cloud生态中，主要基于**Spring Cloud Sleuth**和**Zipkin**来实现跟踪。（新版已迁移至[Micrometer](https://docs.micrometer.io/tracing/reference/index.html))
 
-#### 4.9.1 跟踪集成
+#### 4.9.1 链路集成
 
 1. 引入相关依赖：
 
@@ -539,7 +539,15 @@ public interface UserHttpService {
          probability: 1.0
    ```
 
-   
+#### 4.9.2 链路扩展
+
+1. **数据库**跟踪集成，参考[MyBatisTraceInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/MyBatisTraceInterceptor.java)；
+2. **消息队列**跟踪集成，参考[RocketMQProducer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/RocketMQProducer.java)、[RocketMQConsumer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/RocketMQConsumer.java)。
+
+#### 4.9.3 其他
+
+1. 默认情况下，应用通过http请求上报数据，建议替换为MQ；
+2. 默认情况下，zipkin数据仅内存存储，建议替换为ES。
 
 ### 4.9 系统压测
 
