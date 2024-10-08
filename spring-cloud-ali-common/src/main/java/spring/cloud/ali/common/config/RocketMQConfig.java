@@ -1,7 +1,7 @@
 package spring.cloud.ali.common.config;
 
 import org.springframework.context.annotation.Bean;
-import spring.cloud.ali.common.component.RocketMQProducer;
+import spring.cloud.ali.common.component.mq.RocketMQProducer;
 
 public class RocketMQConfig {
 

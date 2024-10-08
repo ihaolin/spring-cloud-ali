@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.component;
+package spring.cloud.ali.common.component.cfg;
 
 import com.alibaba.csp.sentinel.slots.block.AbstractRule;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;

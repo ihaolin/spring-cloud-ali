@@ -40,8 +40,7 @@ public class HttpResult<T> {
         return r;
     }
 
-    @JsonIgnore
-    public boolean isOk(){
-        return Objects.equals(0, code);
+    public static boolean isSuccess(int code){
+        return 0 == code;
     }
 }

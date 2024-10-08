@@ -2,10 +2,10 @@ package spring.cloud.ali.common.config;
 
 import feign.Client;
 import org.springframework.context.annotation.Bean;
-import spring.cloud.ali.common.component.WrappedFeignClient;
-import spring.cloud.ali.common.component.SentinelConfigService;
-import spring.cloud.ali.common.interceptor.LoginInterceptor;
-import spring.cloud.ali.common.interceptor.WebInterceptor;
+import spring.cloud.ali.common.component.web.WrappedFeignClient;
+import spring.cloud.ali.common.component.cfg.SentinelConfigService;
+import spring.cloud.ali.common.component.web.LoginInterceptor;
+import spring.cloud.ali.common.component.web.WebInterceptor;
 
 public class CommonConfig {
 

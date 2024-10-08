@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.interceptor;
+package spring.cloud.ali.common.component.db;
 
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
@@ -14,7 +14,7 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.util.pattern.PathPattern;
-import spring.cloud.ali.common.component.SentinelConfigService;
+import spring.cloud.ali.common.component.cfg.SentinelConfigService;
 import spring.cloud.ali.common.exception.RedisException;
 import spring.cloud.ali.common.util.WebUtil;
 

@@ -15,7 +15,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
-import spring.cloud.ali.common.component.HttpWebFluxClient;
+import spring.cloud.ali.common.component.web.HttpWebFluxClient;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.user.result.VerifyTokenResult;

@@ -314,7 +314,7 @@ public class ComponentConfig {
 
 #### 4.5.2 服务流控
 
-> 服务流控，作为服务**兜底流控**，应进行策略配置，结合**Spring MVC Interceptor**、**Sentinel**和**Nacos**实现限流拦截器，可参考[ServiceSentinelInterceptor类](./spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/ServiceSentinelInterceptor.java)实现：
+> 服务流控，作为服务**兜底流控**，应进行策略配置，结合**Spring MVC Interceptor**、**Sentinel**和**Nacos**实现限流拦截器，可参考[WebInterceptor类](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/web/WebInterceptor.java)实现：
 
 + 流控规则配置文件：
 
@@ -355,7 +355,7 @@ public class ComponentConfig {
 
 #### 4.6.1 网关调用内部服务
 
-> 通过网关路由的应用接口，默认接入降级能力，业务需在Nacos中配置相关接口熔断降级规则，具体实现可参考[GatewaySentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GatewaySentinelFilter.java)实现，如需对订单应用接口作熔断降级：
+> 通过网关路由的应用接口，默认接入降级能力，业务需在Nacos中配置相关接口熔断降级规则，具体实现可参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现，如需对订单应用接口作熔断降级：
 
 + 配置文件：
 
@@ -371,7 +371,7 @@ public class ComponentConfig {
 
 #### 4.6.2 内部服务间调用
 
-> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[WrappedFeignClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/WrappedFeignClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
+> 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[WrappedFeignClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/web/WrappedFeignClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
 
 ```java
 @Bean
@@ -412,7 +412,7 @@ public interface UserHttpService {
 
 #### redis
 
-> redis调用通常在查询缓存时，可作降级处理，具体实现可参考[RedisInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/RedisInterceptor.java)，业务应用需根据具体的redis操作配置对应降级规则，当前支持降级的数据类型：**value**、**list**、**set**、**zset**、**hash**。
+> redis调用通常在查询缓存时，可作降级处理，具体实现可参考[RedisInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/db/RedisInterceptor.java)，业务应用需根据具体的redis操作配置对应降级规则，当前支持降级的数据类型：**value**、**list**、**set**、**zset**、**hash**。
 
 **Nacos**中的降级规则配置：
 
@@ -541,8 +541,8 @@ public interface UserHttpService {
 
 #### 4.9.2 链路扩展
 
-1. **数据库**跟踪集成，参考[MyBatisTraceInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/interceptor/MyBatisTraceInterceptor.java)；
-2. **消息队列**跟踪集成，参考[RocketMQProducer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/RocketMQProducer.java)、[RocketMQConsumer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/RocketMQConsumer.java)。
+1. **数据库**跟踪集成，参考[TracingInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/db/TracingInterceptor.java)；
+2. **消息队列**跟踪集成，参考[RocketMQProducer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/mq/RocketMQProducer.java)、[RocketMQConsumer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/mq/RocketMQConsumer.java)。
 
 #### 4.9.3 其他
 

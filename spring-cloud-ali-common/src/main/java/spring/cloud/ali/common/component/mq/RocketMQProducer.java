@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.component;
+package spring.cloud.ali.common.component.mq;
 
 import brave.Span;
 import brave.Tracer;

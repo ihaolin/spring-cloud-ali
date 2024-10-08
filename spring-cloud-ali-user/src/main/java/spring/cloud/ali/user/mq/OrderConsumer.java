@@ -1,7 +1,7 @@
 package spring.cloud.ali.user.mq;
 
 import org.springframework.stereotype.Component;
-import spring.cloud.ali.common.component.RocketMQConsumer;
+import spring.cloud.ali.common.component.mq.RocketMQConsumer;
 import spring.cloud.ali.order.mq.OrderMessage;
 
 @Component

@@ -2,7 +2,7 @@ package spring.cloud.ali.order.component;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
-import spring.cloud.ali.common.component.RocketMQProducer;
+import spring.cloud.ali.common.component.mq.RocketMQProducer;
 import spring.cloud.ali.order.mq.OrderMessage;
 
 import javax.annotation.Resource;

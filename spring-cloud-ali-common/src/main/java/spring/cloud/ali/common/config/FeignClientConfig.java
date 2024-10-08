@@ -12,7 +12,7 @@ import org.springframework.cloud.openfeign.loadbalancer.OnRetryNotEnabledConditi
 import org.springframework.cloud.openfeign.loadbalancer.RetryableFeignBlockingLoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
-import spring.cloud.ali.common.component.WrappedFeignClient;
+import spring.cloud.ali.common.component.web.WrappedFeignClient;
 
 /**
  * FeignClient配置类，替换默认FeignClient

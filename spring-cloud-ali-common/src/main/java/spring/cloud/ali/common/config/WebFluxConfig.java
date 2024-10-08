@@ -6,7 +6,7 @@ import org.springframework.cloud.client.loadbalancer.reactive.ReactiveLoadBalanc
 import org.springframework.cloud.client.loadbalancer.reactive.ReactorLoadBalancerExchangeFilterFunction;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.reactive.function.client.WebClient;
-import spring.cloud.ali.common.component.HttpWebFluxClient;
+import spring.cloud.ali.common.component.web.HttpWebFluxClient;
 
 import java.util.List;
 

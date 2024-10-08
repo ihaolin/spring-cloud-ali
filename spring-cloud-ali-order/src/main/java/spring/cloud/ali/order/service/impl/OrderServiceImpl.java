@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import spring.cloud.ali.common.component.RocketMQProducer;
+import spring.cloud.ali.common.component.mq.RocketMQProducer;
 import spring.cloud.ali.common.context.LoginUser;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.order.config.AppConfig;
@@ -44,15 +44,6 @@ public class OrderServiceImpl implements OrderService {
 
         // 通过FeignClient调用远端
         HttpResult<UserDetailResult> userRes = userHttpService.queryUserById(login.getId());
-        if(userRes == null){
-            throwRespDataError();
-        }
-        if (!userRes.isOk()){
-            throwBizException(userRes.getCode(), userRes.getMsg());
-        }
-        if (userRes.getData() == null){
-            throwDataNotFound();
-        }
 
         UserDetailResult user = userRes.getData();
 
@@ -76,12 +67,6 @@ public class OrderServiceImpl implements OrderService {
 
         // 通过FeignClient调用远端
         HttpResult<UserDetailResult> userRes = userHttpService.queryUserById(login.getId());
-        if(userRes == null){
-            throwRespDataError();
-        }
-        if (!userRes.isOk()){
-            throwBizException(userRes.getCode(), userRes.getMsg());
-        }
         if (userRes.getData() == null){
             throwDataNotFound();
         }

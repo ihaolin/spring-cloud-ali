@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.component;
+package spring.cloud.ali.common.component.web;
 
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;

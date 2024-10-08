@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.component;
+package spring.cloud.ali.common.component.web;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.ParameterizedTypeReference;

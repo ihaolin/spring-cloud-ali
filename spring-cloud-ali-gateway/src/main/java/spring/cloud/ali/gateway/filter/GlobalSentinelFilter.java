@@ -34,7 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.pattern.PathPattern;
 import reactor.core.publisher.Mono;
-import spring.cloud.ali.common.component.SentinelConfigService;
+import spring.cloud.ali.common.component.cfg.SentinelConfigService;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.util.WebUtil;
 import spring.cloud.ali.gateway.config.SpringCloudGatewayConfig;

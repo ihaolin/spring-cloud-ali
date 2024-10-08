@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.interceptor;
+package spring.cloud.ali.common.component.db;
 
 import brave.Span;
 import brave.Tracer;
@@ -18,13 +18,13 @@ import java.sql.Connection;
 @Intercepts({
     @Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})
 })
-public class MyBatisTraceInterceptor implements Interceptor {
+public class TracingInterceptor implements Interceptor {
 
     private final DefaultReflectorFactory reflectorFactory = new DefaultReflectorFactory();
 
     private final Tracer tracer;
 
-    public MyBatisTraceInterceptor(Tracer tracer) {
+    public TracingInterceptor(Tracer tracer) {
         this.tracer = tracer;
     }
 

@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.component;
+package spring.cloud.ali.common.component.web;
 
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
@@ -14,10 +14,13 @@ import feign.Client;
 import feign.Request;
 import feign.RequestTemplate;
 import feign.Response;
+import feign.Util;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.pattern.PathPattern;
+import spring.cloud.ali.common.component.cfg.SentinelConfigService;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.exception.BizException;
@@ -28,13 +31,18 @@ import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static spring.cloud.ali.common.component.web.HttpResultAdvice.HTTP_RESULT_BIZ_CODE;
+import static spring.cloud.ali.common.exception.BizException.throwBizException;
 
 /**
  * FeignClient包装类
@@ -102,7 +110,8 @@ public class WrappedFeignClient implements Client {
             sentinelEntry = SphU.entry(resource);
             response = delegate.execute(request, options);
             if (Objects.equals(HttpStatus.OK.value(), response.status())){
-                // TODO 检查业务结果？
+                // 检查业务结果
+                checkHttpBizResult(response);
                 return response;
             }
 
@@ -133,6 +142,18 @@ public class WrappedFeignClient implements Client {
         }
 
         return response;
+    }
+
+    private static void checkHttpBizResult(Response response) throws IOException {
+        Collection<String> bizCodes = response.headers().getOrDefault(HTTP_RESULT_BIZ_CODE, Collections.emptyList());
+        if (!CollectionUtils.isEmpty(bizCodes)){
+            int bizCode = Integer.parseInt(bizCodes.stream().findFirst().get());
+            if (!HttpResult.isSuccess(bizCode)){
+                String body = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
+                HttpResult<?> httpResult = JsonUtil.toObject(body, HttpResult.class);
+                throwBizException(httpResult.getCode(), httpResult.getMsg());
+            }
+        }
     }
 
     private String resolveResource(Request request) {

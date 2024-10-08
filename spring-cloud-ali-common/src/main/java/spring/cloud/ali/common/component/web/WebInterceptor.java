@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.interceptor;
+package spring.cloud.ali.common.component.web;
 
 import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.EntryType;
@@ -14,7 +14,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.pattern.PathPattern;
-import spring.cloud.ali.common.component.SentinelConfigService;
+import spring.cloud.ali.common.component.cfg.SentinelConfigService;
 import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.Resource;
