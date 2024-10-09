@@ -21,6 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.pattern.PathPattern;
 import spring.cloud.ali.common.component.cfg.SentinelConfigService;
+import spring.cloud.ali.common.context.LoginContext;
+import spring.cloud.ali.common.context.LoginUser;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.exception.BizException;

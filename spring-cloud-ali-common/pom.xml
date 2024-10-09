@@ -95,5 +95,12 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- ttl -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
     </dependencies>
 </project>

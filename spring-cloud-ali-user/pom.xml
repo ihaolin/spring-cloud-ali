@@ -118,6 +118,12 @@
             <artifactId>jjwt-jackson</artifactId>
         </dependency>
 
+        <!-- ttl -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+        </dependency>
+
     </dependencies>
 
     <build>

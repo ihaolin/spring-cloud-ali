@@ -251,23 +251,53 @@ public class ComponentConfig {
 
 ## 四、服务治理
 
-### 4.1 安全认证
+### 4.1 安全规范
+
+#### 4.1.1 系统安全
+
+#### 4.1.2 身份认证
+
+> 身份认证即账号认证，对于需要用户登陆的场景，应引导用户认证并授权，在后续操作中，携带相关授权信息。
+
+1. **授权**：参考[UserController#login](spring-cloud-ali-user/src/main/java/spring/cloud/ali/user/controller/UserController.java)接口，登陆成功会发放**token**；
+
+2. **鉴权**：业务请求需携带第1步发放的**token**，网关层进行拦截鉴权，参考[RouteLoginFilter](spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/RouteLoginFilter.java)；
+
+3. **上下文传递**：
+
+   1. 经过网关拦截认证后，请求头携带`Login-User-Id`；
+   2. 微服务拦截器，通过请求头初始化登陆上下文，参考[LoginInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/web/LoginInterceptor.java)；
+   3. 当服务之间次级调用时，需将上下文继续传递，参考[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)；
+
+4. 当存在线程池调用时，为<font color="red">**避免上下文丢失**</font>，应使用[TTL](https://github.com/alibaba/transmittable-thread-local/blob/master/docs/requirement-scenario.md)构建上下文和线程池：
+
+   ```java
+   // 定义TransmittableThreadLocal
+   TransmittableThreadLocal<String> context = new TransmittableThreadLocal<>();
+   
+   // 在主线程中设置上下文
+   context.set("Main Thread Context");
+   
+   // 提交到线程池执行任务时，上下文将被传递
+   ExecutorService executor = TtlExecutors.getTtlExecutorService(Executors.newFixedThreadPool(10));
+   executor.submit(() -> {
+       System.out.println("Context: " + context.get()); // 输出 Main Thread Context
+   });
+   ```
+
+#### 4.1.3 服务鉴权
+
+#### 4.1.4 数据安全
+
+### 4.2 异常规范
 
 
 
-### 4.2 服务鉴权
+### 4.3 日志规范
 
 
 
-### 4.3 异常规范
-
-
-
-### 4.4 日志规范
-
-
-
-### 4.5 流控规范
+### 4.4 流控规范
 
 > 1. **网关流控**：针对外网流量作入口流控（尽量将限流控制在最外层），属于必要流控；
 > 2. **服务流控**：针对单一服务对外流控，包含了来自网关和内部服务的流量，属于兜底流控（必须）；
@@ -275,7 +305,7 @@ public class ComponentConfig {
 > 4. 这里的流控，更多是指**被调用方自限流**，也可作**他限流**（调用方主动流控）；
 > 5. 若需要在Sentinel控制台修改规则并生效，需改动控制台代码，将规则更新请求，转发至Nacos(publishConfig)，而不是应用客户端Transport端口）
 
-#### 4.5.1 网关流控
+#### 4.4.1 网关流控
 
 > 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现：
 
@@ -312,7 +342,7 @@ public class ComponentConfig {
    ]
    ```
 
-#### 4.5.2 服务流控
+#### 4.4.2 服务流控
 
 > 服务流控，作为服务**兜底流控**，应进行策略配置，结合**Spring MVC Interceptor**、**Sentinel**和**Nacos**实现限流拦截器，可参考[WebInterceptor类](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/web/WebInterceptor.java)实现：
 
@@ -349,11 +379,11 @@ public class ComponentConfig {
      ]
      ```
 
-### 4.6 降级规范
+### 4.5 熔断降级
 
 > 降级主要针对应用外部调用场景，当外部服务持续不可用时，应作及时熔断降级，降低雪崩风险。场景主要包含**网关调用内部服务**、**内部服务间调用**、**中间件调用**、**第三方调用**等
 
-#### 4.6.1 网关调用内部服务
+#### 4.5.1 网关调用内部服务
 
 > 通过网关路由的应用接口，默认接入降级能力，业务需在Nacos中配置相关接口熔断降级规则，具体实现可参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现，如需对订单应用接口作熔断降级：
 
@@ -369,7 +399,7 @@ public class ComponentConfig {
 
   ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_degrade_rule.png)
 
-#### 4.6.2 内部服务间调用
+#### 4.5.2 内部服务间调用
 
 > 服务内依赖的服务调用（如feign），默认接入降级能力，具体实现可参考[WrappedFeignClient](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/web/WrappedFeignClient.java)、[FeignClientConfig](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/config/FeignClientConfig.java)，应用api接口需要配置**FeignClientConfig**：
 
@@ -408,9 +438,9 @@ public interface UserHttpService {
 1. `limitApp`：应用标识，和`@FeignClient`中的`name`一致，为了确保不同应用可能存在相同的path
 2. `resource`：资源标识，请求方法#请求路径
 
-#### 4.6.3 中间件调用
+#### 4.5.3 中间件调用
 
-#### redis
+##### 4.5.3.1 redis
 
 > redis调用通常在查询缓存时，可作降级处理，具体实现可参考[RedisInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/db/RedisInterceptor.java)，业务应用需根据具体的redis操作配置对应降级规则，当前支持降级的数据类型：**value**、**list**、**set**、**zset**、**hash**。
 
@@ -426,15 +456,15 @@ public interface UserHttpService {
 
 + `resource`：资源标识，数据类型#操作方法#操作key
 
-#### 4.6.4 第三方调用
+#### 4.5.4 第三方调用
 
 
 
-### 4.7 监控报警
+### 4.6 监控报警
 
 > 监控主要基于**Spring Boot Actuator**及**Micrometer**（集成）、**Prometheus**（采集）、**Grafana**（可视化&报警），主要覆盖**系统监控**、**JVM监控**、**接口监控**、**日志监控**、**业务监控**等
 
-#### 4.7.1 监控集成
+#### 4.6.1 监控集成
 
 1. 引入actuator和micrometer依赖：
 
@@ -507,13 +537,13 @@ public interface UserHttpService {
 
 5. 对于自定义指标，只需注入`MeterRegistry`进行指标统计，可参考[GlobalMetricFilter](spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalMetricFilter.java)。
 
-#### 4.7.2 报警管理
+#### 4.6.2 报警管理
 
-### 4.8 链路跟踪
+### 4.7 链路跟踪
 
 > 用于分布式环境中，跟踪请求的跨系统调用路径，便于排查和依赖分析。在Spring Cloud生态中，主要基于**Spring Cloud Sleuth**和**Zipkin**来实现跟踪。（新版已迁移至[Micrometer](https://docs.micrometer.io/tracing/reference/index.html))
 
-#### 4.9.1 链路集成
+#### 4.7.1 链路集成
 
 1. 引入相关依赖：
 
@@ -539,21 +569,21 @@ public interface UserHttpService {
          probability: 1.0
    ```
 
-#### 4.9.2 链路扩展
+#### 4.7.2 链路扩展
 
 1. **数据库**跟踪集成，参考[TracingInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/db/TracingInterceptor.java)；
 2. **消息队列**跟踪集成，参考[RocketMQProducer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/mq/RocketMQProducer.java)、[RocketMQConsumer](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/mq/RocketMQConsumer.java)。
 
-#### 4.9.3 其他
+#### 4.7.3 其他
 
 1. 默认情况下，应用通过http请求上报数据，建议替换为MQ；
 2. 默认情况下，zipkin数据仅内存存储，建议替换为ES。
 
-### 4.9 系统压测
+### 4.8 系统压测
 
 
 
-### 4.10 系统诊断
+### 4.9 系统诊断
 
 
 
