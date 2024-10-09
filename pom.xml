@@ -30,6 +30,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- 整个项目的依赖版本包（各模块按需引入，无需引入包版本号） -->
     <dependencyManagement>
         <dependencies>
 
@@ -48,8 +49,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
-            <!-- 整个项目的依赖版本包（各模块按需引入，无需引入包版本号） -->
 
             <!-- 数据库相关（MySQL) -->
             <dependency>
@@ -97,9 +96,8 @@
         </dependencies>
     </dependencyManagement>
 
+    <!-- 所有module都需要强依赖的包 -->
     <dependencies>
-
-        <!-- 所有module都需要强依赖的包 -->
 
         <!-- 监控 -->
         <dependency>
