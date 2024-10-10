@@ -4,7 +4,7 @@ import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
-import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
@@ -24,11 +24,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
-@SuppressWarnings("unchecked")
 @Slf4j
 public class RedisInterceptor implements MethodInterceptor {
-
-    private static final String DEGRADE_RULES = "degrade-rules-redis.json";
 
     private static final String RESOURCE_PREFIX = "redis";
 
@@ -61,10 +58,12 @@ public class RedisInterceptor implements MethodInterceptor {
         return invocation.proceed();
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T getOperationProxy(Object opt, String opsForName) {
         return (T) operationProxies.computeIfAbsent(opt.getClass(), clazz -> createOperationProxy(opt, opsForName));
     }
 
+    @SuppressWarnings("unchecked")
     private <T> T createOperationProxy(T target, String opsForName) {
         ProxyFactory proxyFactory = new ProxyFactory();
         proxyFactory.setTarget(target);
