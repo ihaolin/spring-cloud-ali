@@ -5,6 +5,8 @@ import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.nacos.api.exception.NacosException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -33,8 +35,10 @@ public class SentinelServiceRules {
 
     private volatile Map<String, DegradeRule> degradeRuleMap = Collections.emptyMap();
 
-    @PostConstruct
-    public void onInit() throws NacosException {
+    @EventListener
+    public void onAppReady(ApplicationReadyEvent event) throws NacosException {
+
+
 
         sentinelConfigService.initFlowRules(SENTINEL_FLOW_RULES, appName, new SentinelConfigService.RuleListener<FlowRule>() {
             @Override
