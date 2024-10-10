@@ -5,7 +5,6 @@ import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
-import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
 import com.alibaba.nacos.shaded.com.google.common.collect.ImmutableMap;
 import com.google.common.base.Throwables;
@@ -20,9 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.pattern.PathPattern;
-import spring.cloud.ali.common.component.cfg.SentinelConfigService;
-import spring.cloud.ali.common.context.LoginContext;
-import spring.cloud.ali.common.context.LoginUser;
+import spring.cloud.ali.common.component.sentinel.SentinelServiceRules;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.exception.BizException;
@@ -31,17 +28,14 @@ import spring.cloud.ali.common.exception.SystemException;
 import spring.cloud.ali.common.util.JsonUtil;
 import spring.cloud.ali.common.util.WebUtil;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import static spring.cloud.ali.common.component.web.HttpResultAdvice.HTTP_RESULT_BIZ_CODE;
 import static spring.cloud.ali.common.exception.BizException.throwBizException;
@@ -54,8 +48,6 @@ public class WrappedFeignClient implements Client {
 
     private static final String SERVER_INTERNAL_ERROR = JsonUtil.toJson(HttpResult.fail(BizException.SERVER_INTERNAL_ERROR));
 
-    private static final String DEGRADE_RULES = "degrade-rules-feign.json";
-
     private static final String RESOURCE_PREFIX = "feign";
 
     private static final String RESOURCE_SPLITTER = "#";
@@ -64,36 +56,12 @@ public class WrappedFeignClient implements Client {
     private String appName;
 
     @Resource
-    private SentinelConfigService sentinelConfigService;
-
-    private volatile Map<String, DegradeRule> degradeRuleMap = Collections.emptyMap();
+    private SentinelServiceRules sentinelServiceRules;
 
     private final Client delegate;
 
     public WrappedFeignClient(Client delegate) {
         this.delegate = delegate;
-    }
-
-    @PostConstruct
-    public void onInit() {
-        try {
-            sentinelConfigService.initDegradeRules(DEGRADE_RULES, appName, new SentinelConfigService.RuleListener<DegradeRule>() {
-
-                @Override
-                public void prevRefresh(List<DegradeRule> refreshing) {
-                    // 增加前缀feign和limitApp，避免和其他应用规则冲突
-                    refreshing.forEach((r) -> r.setResource(
-                            RESOURCE_PREFIX + RESOURCE_SPLITTER + r.getLimitApp() + RESOURCE_SPLITTER + r.getResource()));
-                }
-
-                @Override
-                public void postRefresh(List<DegradeRule> refreshed) {
-                    degradeRuleMap = refreshed.stream().collect(Collectors.toMap(DegradeRule::getResource, f -> f));
-                }
-            });
-        } catch (NacosException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
@@ -159,6 +127,9 @@ public class WrappedFeignClient implements Client {
     }
 
     private String resolveResource(Request request) {
+
+        Map<String, DegradeRule> degradeRuleMap = sentinelServiceRules.getDegradeRules();
+
         // GET#/api/users
         RequestTemplate rt = request.requestTemplate();
         String targetName = rt.feignTarget().name();    // 应用名称, @FeignClient(name)

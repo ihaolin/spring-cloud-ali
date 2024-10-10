@@ -4,8 +4,7 @@ import com.alibaba.csp.sentinel.Entry;
 import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.Tracer;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
-import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
-import com.alibaba.nacos.api.exception.NacosException;
+import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import lombok.extern.slf4j.Slf4j;
@@ -14,20 +13,16 @@ import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.util.pattern.PathPattern;
-import spring.cloud.ali.common.component.cfg.SentinelConfigService;
+import spring.cloud.ali.common.component.sentinel.SentinelServiceRules;
 import spring.cloud.ali.common.exception.RedisException;
 import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 @Slf4j
@@ -45,31 +40,7 @@ public class RedisInterceptor implements MethodInterceptor {
     private String appName;
 
     @Resource
-    private SentinelConfigService sentinelConfigService;
-
-    private volatile Map<String, DegradeRule> degradeRuleMap = Collections.emptyMap();
-
-    @PostConstruct
-    public void onInit() {
-        try {
-            sentinelConfigService.initDegradeRules(DEGRADE_RULES, appName, new SentinelConfigService.RuleListener<DegradeRule>() {
-
-                @Override
-                public void prevRefresh(List<DegradeRule> refreshing) {
-                    // 增加前缀redis，避免和其他规则冲突
-                    refreshing.forEach((r) -> r.setResource(
-                            RESOURCE_PREFIX + RESOURCE_SPLITTER + r.getResource()));
-                }
-
-                @Override
-                public void postRefresh(List<DegradeRule> refreshed) {
-                    degradeRuleMap = refreshed.stream().collect(Collectors.toMap(DegradeRule::getResource, f -> f));
-                }
-            });
-        } catch (NacosException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private SentinelServiceRules sentinelServiceRules;
 
     @Nullable
     @Override
@@ -148,6 +119,8 @@ public class RedisInterceptor implements MethodInterceptor {
     }
 
     private String resolveResource(String opsForName, MethodInvocation invocation) {
+
+        Map<String, DegradeRule> degradeRuleMap = sentinelServiceRules.getDegradeRules();
 
         String optName = invocation.getMethod().getName();
         String optKey = (String) invocation.getArguments()[0];

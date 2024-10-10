@@ -2,8 +2,9 @@ package spring.cloud.ali.common.config;
 
 import feign.Client;
 import org.springframework.context.annotation.Bean;
+import spring.cloud.ali.common.component.sentinel.SentinelServiceRules;
 import spring.cloud.ali.common.component.web.WrappedFeignClient;
-import spring.cloud.ali.common.component.cfg.SentinelConfigService;
+import spring.cloud.ali.common.component.sentinel.SentinelConfigService;
 import spring.cloud.ali.common.component.web.LoginInterceptor;
 import spring.cloud.ali.common.component.web.WebInterceptor;
 
@@ -12,6 +13,11 @@ public class CommonConfig {
     @Bean
     public SentinelConfigService sentinelConfigService(){
         return new SentinelConfigService();
+    }
+
+    @Bean
+    public SentinelServiceRules serviceSentinelRules(){
+        return new SentinelServiceRules();
     }
 
     @Bean
@@ -33,4 +39,6 @@ public class CommonConfig {
     public LoginInterceptor loginInterceptor(){
         return new LoginInterceptor();
     }
+
+
 }

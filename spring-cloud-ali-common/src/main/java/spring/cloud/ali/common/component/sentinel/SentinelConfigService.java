@@ -1,4 +1,4 @@
-package spring.cloud.ali.common.component.cfg;
+package spring.cloud.ali.common.component.sentinel;
 
 import com.alibaba.csp.sentinel.slots.block.AbstractRule;
 import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
@@ -40,7 +40,11 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SentinelConfigService implements InitializingBean {
 
-    private static final String SPLITTER = "#";
+    public static final String SENTINEL_FLOW_RULES = "flow-rules.json";
+
+    public static final String SENTINEL_DEGRADE_RULES = "degrade-rules.json";
+
+    public static final String SENTINEL_RULE_SPLITTER = "#";
 
     /**
      * 流控规则刷新锁
@@ -123,7 +127,7 @@ public class SentinelConfigService implements InitializingBean {
             }
         };
         configService.addListener(dataId, group, configListener);
-        groupDataListeners.put(group + SPLITTER + dataId, configListener);
+        groupDataListeners.put(group + SENTINEL_RULE_SPLITTER + dataId, configListener);
     }
 
     private void refreshFlowRules(String dataId, String group, String latestFlowRules, RuleListener<FlowRule> listener) {
@@ -139,7 +143,7 @@ public class SentinelConfigService implements InitializingBean {
         if (listener != null){
             listener.postRefresh(refreshedRules);
         }
-        groupDataRules.put(group + SPLITTER + dataId, refreshedRules);
+        groupDataRules.put(group + SENTINEL_RULE_SPLITTER + dataId, refreshedRules);
     }
 
     /**
@@ -150,7 +154,7 @@ public class SentinelConfigService implements InitializingBean {
     private List<FlowRule> doRefreshFlowRules(String dataId, String group, List<FlowRule> groupDataLatestRules) {
         flowRulesRefreshLock.lock();
         try {
-            String groupDataKey = group + SPLITTER + dataId;
+            String groupDataKey = group + SENTINEL_RULE_SPLITTER + dataId;
             List<FlowRule> groupDataFlowRules = (List<FlowRule>) groupDataRules.get(groupDataKey);
             List<FlowRule> refreshedRules = doRefreshRules(FlowRuleManager.getRules(), groupDataFlowRules, groupDataLatestRules);
             FlowRuleManager.loadRules(refreshedRules);
@@ -191,7 +195,7 @@ public class SentinelConfigService implements InitializingBean {
             }
         };
         configService.addListener(dataId, group, configListener);
-        groupDataListeners.put(group + SPLITTER + dataId, configListener);
+        groupDataListeners.put(group + SENTINEL_RULE_SPLITTER + dataId, configListener);
     }
 
     private void refreshDegradeRules(String dataId, String group, String latestDegradeRules, RuleListener<DegradeRule> listener) {
@@ -207,7 +211,7 @@ public class SentinelConfigService implements InitializingBean {
         if (listener != null){
             listener.postRefresh(refreshedRules);
         }
-        groupDataRules.put(group + SPLITTER + dataId, refreshedRules);
+        groupDataRules.put(group + SENTINEL_RULE_SPLITTER + dataId, refreshedRules);
     }
 
     /**
@@ -219,7 +223,7 @@ public class SentinelConfigService implements InitializingBean {
     private List<DegradeRule> doRefreshDegradeRules(String dataId, String group, List<DegradeRule> groupDataLatestRules) {
         degradeRulesRefreshLock.lock();
         try {
-            String groupDataKey = group + SPLITTER + dataId;
+            String groupDataKey = group + SENTINEL_RULE_SPLITTER + dataId;
             List<DegradeRule> groupDataDegradeRules = (List<DegradeRule>) groupDataRules.get(groupDataKey);
             List<DegradeRule> refreshedRules = doRefreshRules(DegradeRuleManager.getRules(), groupDataDegradeRules, groupDataLatestRules);
             DegradeRuleManager.loadRules(refreshedRules);
@@ -301,7 +305,7 @@ public class SentinelConfigService implements InitializingBean {
      * @param <T> AbstractRule
      */
     private <T extends AbstractRule> List<T> doDestroyRules(String dataId, String group, List<T> currentRules){
-        String groupDataId = group + SPLITTER + dataId;
+        String groupDataId = group + SENTINEL_RULE_SPLITTER + dataId;
 
         // 取消监听
         Listener listener = groupDataListeners.get(groupDataId);

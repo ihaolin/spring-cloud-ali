@@ -6,25 +6,19 @@ import com.alibaba.csp.sentinel.SphU;
 import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
-import com.alibaba.nacos.api.exception.NacosException;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.pattern.PathPattern;
-import spring.cloud.ali.common.component.cfg.SentinelConfigService;
+import spring.cloud.ali.common.component.sentinel.SentinelServiceRules;
 import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY;
 
@@ -43,26 +37,7 @@ public class WebInterceptor implements HandlerInterceptor {
     private String appName;
 
     @Resource
-    private SentinelConfigService sentinelConfigService;
-
-    /**
-     * 用于路径资源匹配
-     */
-    private volatile Map<String, FlowRule> flowRuleMap = Collections.emptyMap();
-
-    @EventListener
-    public void onAppReady(ApplicationReadyEvent event) {
-        try {
-            sentinelConfigService.initFlowRules(FLOW_RULES, appName, new SentinelConfigService.RuleListener<FlowRule>() {
-                @Override
-                public void postRefresh(List<FlowRule> refreshed) {
-                    flowRuleMap = refreshed.stream().collect(Collectors.toMap(FlowRule::getResource, f -> f));
-                }
-            });
-        } catch (NacosException e) {
-            throw new RuntimeException(e);
-        }
-    }
+    private SentinelServiceRules sentinelServiceRules;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -93,6 +68,9 @@ public class WebInterceptor implements HandlerInterceptor {
     }
 
     private String resolveResource(HttpServletRequest request) {
+
+        Map<String, FlowRule> flowRuleMap = sentinelServiceRules.getFlowRules();
+
         // GET#/api/v1/users
         String resourcePrefix = request.getMethod() + RESOURCE_SPLITTER;
         String resource = resourcePrefix + request.getRequestURI();

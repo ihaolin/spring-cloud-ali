@@ -34,7 +34,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.util.pattern.PathPattern;
 import reactor.core.publisher.Mono;
-import spring.cloud.ali.common.component.cfg.SentinelConfigService;
+import spring.cloud.ali.common.component.sentinel.SentinelConfigService;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.util.WebUtil;
 import spring.cloud.ali.gateway.config.SpringCloudGatewayConfig;
@@ -49,6 +49,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR;
+import static spring.cloud.ali.common.component.sentinel.SentinelConfigService.SENTINEL_DEGRADE_RULES;
+import static spring.cloud.ali.common.component.sentinel.SentinelConfigService.SENTINEL_FLOW_RULES;
+import static spring.cloud.ali.common.component.sentinel.SentinelConfigService.SENTINEL_RULE_SPLITTER;
 import static spring.cloud.ali.common.enums.HttpRespStatus.DEFAULT;
 import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY;
 
@@ -62,12 +65,6 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalSentinelFilter implements GlobalFilter {
-
-    private static final String SENTINEL_FLOW_RULES = "flow-rules.json";
-
-    private static final String SENTINEL_DEGRADE_RULES = "degrade-rules.json";
-
-    private static final String SENTINEL_RULE_APP_SPLITTER = "#";
 
     @Value("${spring.application.name}")
     private String appName;
@@ -170,7 +167,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
 
         // 内存中规则：ali-user#GET#/users/detail，规则配置文件里是GET#/users/detail
         String requestPath = req.getPath().value();
-        String resourcePrefix = route.getId() + SENTINEL_RULE_APP_SPLITTER + req.getMethod().name() + SENTINEL_RULE_APP_SPLITTER;
+        String resourcePrefix = route.getId() + SENTINEL_RULE_SPLITTER + req.getMethod().name() + SENTINEL_RULE_SPLITTER;
         String resource = resourcePrefix + requestPath;
 
         RouteAppRules appRules = allAppRules.get(route.getId());
@@ -262,7 +259,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
             @Override
             public void prevRefresh(List<FlowRule> refreshing) {
                 // 网关内存用routeId作前缀，避免不同应用冲突
-                refreshing.forEach((r) -> r.setResource(routeId + SENTINEL_RULE_APP_SPLITTER + r.getResource()));
+                refreshing.forEach((r) -> r.setResource(routeId + SENTINEL_RULE_SPLITTER + r.getResource()));
             }
 
             @Override
@@ -283,7 +280,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
             @Override
             public void prevRefresh(List<DegradeRule> refreshing) {
                 // 网关内存用routeId作前缀，避免不同应用冲突
-                refreshing.forEach((r) -> r.setResource(routeId + SENTINEL_RULE_APP_SPLITTER + r.getResource()));
+                refreshing.forEach((r) -> r.setResource(routeId + SENTINEL_RULE_SPLITTER + r.getResource()));
             }
 
             @Override
