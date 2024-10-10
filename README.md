@@ -389,40 +389,48 @@ public interface UserHttpService {
 }
 ```
 
-**Nacos**中的降级规则配置：
-
-![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_nacos_degrade_rules_feign.png)
-
-1. `_sentinel_`：存放sentinel规则的配置命名空间
-2. `ali-order`：当前应用名称
-3. `degrade-rules-feign.json`：feign调用降级规则文件
-
-![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_nacos_degrade_rule_feign.png)
-
-1. `limitApp`：应用标识，和`@FeignClient`中的`name`一致，为了确保不同应用可能存在相同的path
-2. `resource`：资源标识，请求方法#请求路径
-
 #### 4.5.3 中间件调用
 
 ##### 4.5.3.1 redis
 
 > redis调用通常在查询缓存时，可作降级处理，具体实现可参考[RedisInterceptor](spring-cloud-ali-common/src/main/java/spring/cloud/ali/common/component/db/RedisInterceptor.java)，业务应用需根据具体的redis操作配置对应降级规则，当前支持降级的数据类型：**value**、**list**、**set**、**zset**、**hash**。
 
-**Nacos**中的降级规则配置：
-
-![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_degrade_rules_redis.png)
-
-1. `_sentinel_`：存放sentinel规则的配置命名空间
-2. `ali-user`：当前应用名称
-3. `degrade-rules-redis.json`：redis操作降级规则文件
-
-![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_degrade_rule_redis.png)
-
-+ `resource`：资源标识，数据类型#操作方法#操作key
-
 #### 4.5.4 第三方调用
 
 
+
+#### 4.5.5 降级规则配置
+
+规则放在应用的`degrade-rules.json`文件中，通过资源前缀区分不同类型，如feign，redis等：
+
+```json
+[
+    {
+        "resource": "GET#/users/detail", 				// 网关对当前服务降级
+        "grade": 1,
+        "count": 0.5,
+        "timeWindow": 10,
+        "minRequestAmount": 5,
+        "statIntervalMs": 10000
+    },
+    {
+        "resource": "redis#value#get#users:{userId}",   // 当前服务对redis降级
+        "grade": 2, 
+        "count": 1, 
+        "timeWindow": 30,
+        "minRequestAmount": 1,
+        "statIntervalMs": 10000 
+    },
+    {
+        "resource": "feign#ali-user#GET#/users/detail",  // 当前服务对依赖服务降级
+        "grade": 2, 
+        "count": 1, 
+        "timeWindow": 30,
+        "minRequestAmount": 1,
+        "statIntervalMs": 10000 
+    }, ...
+]
+```
 
 ### 4.6 监控报警
 
