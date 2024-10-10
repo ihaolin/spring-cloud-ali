@@ -63,15 +63,9 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_REQUEST_TOO_MANY
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class GlobalSentinelFilter implements GlobalFilter {
 
-    private static final String SENTINEL_CTX = "_sentinel_gateway_ctx_";
+    private static final String SENTINEL_FLOW_RULES = "flow-rules.json";
 
-    private static final String SENTINEL_FLOW_RULES = "flow-rules";
-    private static final String SENTINEL_FLOW_RULES_PREFIX = SENTINEL_FLOW_RULES + "-";
-
-    private static final String SENTINEL_DEGRADE_RULES = "degrade-rules";
-    private static final String SENTINEL_DEGRADE_RULES_PREFIX = SENTINEL_DEGRADE_RULES + "-";
-
-    private static final String SENTINEL_RULES_SUFFIX = ".json";
+    private static final String SENTINEL_DEGRADE_RULES = "degrade-rules.json";
 
     private static final String SENTINEL_RULE_APP_SPLITTER = "#";
 
@@ -264,7 +258,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
     private void initAppRules(String routeId) throws NacosException {
 
         // 初始化流控规则
-        sentinelConfigService.initFlowRules(buildFlowRulesFileName(routeId), appName, new SentinelConfigService.RuleListener<FlowRule>() {
+        sentinelConfigService.initFlowRules(SENTINEL_FLOW_RULES, routeId, new SentinelConfigService.RuleListener<FlowRule>() {
             @Override
             public void prevRefresh(List<FlowRule> refreshing) {
                 // 网关内存用routeId作前缀，避免不同应用冲突
@@ -285,7 +279,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
         });
 
         // 初始化降级规则
-        sentinelConfigService.initDegradeRules(buildDegradeRulesFileName(routeId), appName, new SentinelConfigService.RuleListener<DegradeRule>() {
+        sentinelConfigService.initDegradeRules(SENTINEL_DEGRADE_RULES, routeId, new SentinelConfigService.RuleListener<DegradeRule>() {
             @Override
             public void prevRefresh(List<DegradeRule> refreshing) {
                 // 网关内存用routeId作前缀，避免不同应用冲突
@@ -314,21 +308,13 @@ public class GlobalSentinelFilter implements GlobalFilter {
     private void destroyAppRules(String routeId) {
 
         // 销毁流控规则
-        sentinelConfigService.destroyFlowRules(buildFlowRulesFileName(routeId), appName);
+        sentinelConfigService.destroyFlowRules(SENTINEL_FLOW_RULES, routeId);
 
         // 销毁熔断规则
-        sentinelConfigService.destroyDegradeRules(buildDegradeRulesFileName(routeId), appName);
+        sentinelConfigService.destroyDegradeRules(SENTINEL_DEGRADE_RULES, routeId);
 
         // 移除该应用
         allAppRules.remove(routeId);
-    }
-
-    private String buildFlowRulesFileName(String routeId) {
-        return SENTINEL_FLOW_RULES_PREFIX + routeId + SENTINEL_RULES_SUFFIX;
-    }
-
-    private String buildDegradeRulesFileName(String routeId) {
-        return SENTINEL_DEGRADE_RULES_PREFIX + routeId + SENTINEL_RULES_SUFFIX;
     }
 
     @Data

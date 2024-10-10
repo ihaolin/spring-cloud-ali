@@ -307,40 +307,10 @@ public class ComponentConfig {
 
 #### 4.4.1 网关流控
 
-> 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，API维度需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现：
+> 网关内，会集成很多服务应用，且请求API无法预先注册（**可通过服务API列表自动初始化配置**），Sentinel原生只支持**路由（Route）**和**API分组**维度的流控，**API维度**需自行实现，结合Nacos作规则持久化，可实现动态配置，参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现：
 
-+ 流控规则文件配置：
++ 流控规则，复用对应routeId（服务名）的`flow-rules.json`文件；
 
-  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_flow_rules.png)
-
-1. `_sentinel_`：存放sentinel规则的配置命名空间
-
-2. `ali-gateway`：使用网关应用名称，作为配置分组
-
-3. `flow-rules-ali-user`.json：微服务应用`ali-user`（与route.id一致）的流控规则配置：
-
-   ```json
-   [
-       {
-           "resource": "GET#/users/detail", // METHOD#URI
-           "limitApp": "default",
-           "grade": 1,
-           "count": 3,
-           "strategy": 0,
-           "controlBehavior": 0,
-           "clusterMode": false
-       },
-       {
-           "resource": "GET#/users/{userId}",
-           "limitApp": "default",
-           "grade": 1,
-           "count": 1,
-           "strategy": 0,
-           "controlBehavior": 0,
-           "clusterMode": false
-       }
-   ]
-   ```
 
 #### 4.4.2 服务流控
 
@@ -387,17 +357,11 @@ public class ComponentConfig {
 
 > 通过网关路由的应用接口，默认接入降级能力，业务需在Nacos中配置相关接口熔断降级规则，具体实现可参考[GlobalSentinelFilter类](./spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalSentinelFilter.java)实现，如需对订单应用接口作熔断降级：
 
-+ 配置文件：
-
-  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_degrade_rules.png)
-
-  1. `_sentinel_`：存放sentinel规则的配置命名空间
-  2. `ali-gateway`：使用网关应用名称，作为配置分组
-  3. `degrade-rules-ali-user.json`：微服务应用`ali-user`（与route.id一致）的流控规则配置
++ 降级规则，复用对应routeId（服务名，如ali-user）的`degrades-rules.json`文件；
 
 + 配置详情：（资源标识：请求方法#请求路径）
 
-  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\gateway_nacos_degrade_rule.png)
+  ![](C:\Users\AntaresLin\Dev\spring-cloud-ali\screenshot\service_degarde_rule.png)
 
 #### 4.5.2 内部服务间调用
 
