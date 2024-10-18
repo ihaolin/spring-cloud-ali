@@ -1,0 +1,12 @@
+user:
+  login-sign-key: r3q1T3YkRk6xZG0w5zCm5QxeXKl69l2j
+  
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8010
+        port: 18001
+  rocketmq:
+    producer:
+      group: ali-user-producer-grp

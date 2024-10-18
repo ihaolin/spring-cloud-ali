@@ -1,0 +1,66 @@
+spring:
+  codec:        # 限制请求体的最大内存大小为10MB
+    max-in-memory-size: 10MB
+  servlet:      # 限制请求和文件上传大小
+    multipart:
+      max-file-size: 10MB 
+      max-request-size: 15MB 
+  web:          
+    resources:  # 禁止静态资源映射，如/error
+      add-mappings: false
+  mvc:          # 当path不存在时，抛出异常
+    throw-exception-if-no-handler-found: true
+  cloud:
+    gateway:
+      routes:
+        - id: ali-user
+          uri: lb://ali-user
+          predicates:
+            - Path=/users/**
+          filters:
+            - name: RouteLoginFilter
+              args: 
+                excludes:
+                  - GET#/users/login
+        - id: ali-order
+          uri: lb://ali-order
+          predicates:
+            - Path=/orders/**
+          filters:
+            - RouteLoginFilter
+    sentinel:
+      nacos:
+        namespace: _sentinel_
+      transport:
+        dashboard: localhost:8010
+        port: 18888
+  zipkin:
+    base-url: http://localhost:9411
+  sleuth:
+    sampler:
+      probability: 1.0
+
+# feign配置    
+feign:          
+  client:
+    config:
+      default:   # 默认设置，也可通过name区分配置
+        connectTimeout: 5000  
+        readTimeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    enable:
+      all: true
+    tags:
+      enabled: true
+    export:
+      prometheus:
+        enabled: true

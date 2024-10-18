@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    sentinel:
+      transport:
+        dashboard: localhost:8010
+        port: 18002
+  rocketmq:
+    producer:
+      group: ali-order-producer-grp

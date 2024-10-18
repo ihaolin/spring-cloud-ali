@@ -1,0 +1,68 @@
+spring:
+  codec:        # 限制请求体的最大内存大小为10MB
+    max-in-memory-size: 10MB
+  servlet:      # 限制请求和文件上传大小
+    multipart:
+      max-file-size: 10MB 
+      max-request-size: 15MB 
+  web:          
+    resources:  # 禁止静态资源映射，如/error
+      add-mappings: false
+  mvc:          # 当path不存在时，抛出异常
+    throw-exception-if-no-handler-found: true
+  cloud:
+    sentinel:
+      nacos:
+        namespace: _sentinel_  
+  datasource:   # 数据源配置
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: root
+    url: jdbc:mysql://localhost:3306/spring-cloud-ali?characterEncoding=utf8&zeroDateTimeBehavior=convertToNull&useSSL=false&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&allowMultiQueries=true&allowPublicKeyRetrieval=true&rewriteBatchedStatements=true
+  redis:
+    host: localhost
+    port: 6379
+    password: redis
+  rocketmq:
+    name-server: 127.0.0.1:9876
+  zipkin:
+    base-url: http://localhost:9411
+  sleuth:
+    sampler:
+      probability: 1.0
+
+# Mybatis-Plus配置
+mybatis-plus:     
+  mapper-locations: classpath:/mapper/*.xml
+  type-aliases-package: spring.cloud.ali.**.model
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: deleted
+      logic-not-delete-value: 0
+      logic-delete-value: 1
+
+# feign配置    
+feign:          
+  client:
+    config:
+      default:   # 默认设置，也可通过name区分配置
+        connectTimeout: 5000  
+        readTimeout: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    enable:
+      all: true
+    tags:
+      enabled: true
+    export:
+      prometheus:
+        enabled: true
