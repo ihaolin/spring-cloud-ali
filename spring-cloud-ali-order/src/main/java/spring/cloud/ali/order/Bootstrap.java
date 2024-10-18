@@ -1,5 +1,6 @@
 package spring.cloud.ali.order;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -16,6 +17,9 @@ import org.springframework.context.annotation.ComponentScan;
 @ComponentScan({ // 需要扫描的包，应明确指出，避免扫描到不必要的组件
     "spring.cloud.ali.order",
     "spring.cloud.ali.common"
+})
+@MapperScan(basePackages = {
+        "spring.cloud.ali.order.mapper"
 })
 public class Bootstrap {
 

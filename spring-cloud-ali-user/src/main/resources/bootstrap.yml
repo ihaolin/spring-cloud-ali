@@ -4,8 +4,6 @@ server:
 spring:
   application:
     name: ali-user
-  profiles:
-    active:
   cloud:
     nacos:
       config:

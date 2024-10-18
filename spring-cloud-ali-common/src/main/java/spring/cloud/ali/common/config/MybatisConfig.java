@@ -3,18 +3,20 @@ package spring.cloud.ali.common.config;
 
 import brave.Tracer;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mybatis.spring.SqlSessionFactoryBean;
+import org.springframework.context.annotation.Bean;
 import spring.cloud.ali.common.component.db.TracingInterceptor;
 
-import java.util.List;
+import javax.sql.DataSource;
 
 
 public class MybatisConfig {
 
-    @Autowired
-    public MybatisConfig(List<SqlSessionFactory> factories, Tracer tracer){
-        for (SqlSessionFactory factory : factories){
-            factory.getConfiguration().addInterceptor(new TracingInterceptor(tracer));
-        }
+    @Bean
+    public SqlSessionFactory sqlSessionFactory(DataSource dataSource, Tracer tracer) throws Exception {
+        SqlSessionFactoryBean sessionFactory = new SqlSessionFactoryBean();
+        sessionFactory.setDataSource(dataSource);
+        sessionFactory.addPlugins(new TracingInterceptor(tracer));
+        return sessionFactory.getObject();
     }
 }
