@@ -1,7 +1,6 @@
 package spring.cloud.ali.user.service.impl;
 
 import com.alibaba.nacos.shaded.com.google.common.collect.ImmutableMap;
-import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.google.common.base.Strings;
 import io.jsonwebtoken.Claims;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -45,9 +44,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserLoginResult login(String userName, String password) {
 
-        QueryWrapper<User> q = new QueryWrapper<>();
-        q.eq("username", userName);
-        User user = userMapper.selectOne(q);
+        User user = userMapper.queryByUserName(userName);
 
         if (user == null || !Objects.equals(password, user.getPassword())){
             throw USER_PWD_ERROR;
@@ -81,9 +78,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDetailResult queryUserByName(String userName) {
-        QueryWrapper<User> q = new QueryWrapper<>();
-        q.eq("username", userName);
-        User user = userMapper.selectOne(q);
+        User user = userMapper.queryByUserName(userName);
         if (user == null){
             return null;
         }
@@ -100,7 +95,7 @@ public class UserServiceImpl implements UserService {
             return JsonUtil.toObject(String.valueOf(cached), UserDetailResult.class);
         }
 
-        User user = userMapper.selectById(userId);
+        User user = userMapper.queryById(userId);
         if (user == null){
             return null;
         }
