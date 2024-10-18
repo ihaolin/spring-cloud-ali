@@ -12,13 +12,13 @@ import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.message.MessageExt;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.util.CollectionUtils;
 import spring.cloud.ali.common.util.JsonUtil;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
 
@@ -28,7 +28,7 @@ import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SPAN
 import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_TRACE_ID;
 
 @Slf4j
-public abstract class RocketMQConsumer<T> {
+public abstract class RocketMQConsumer<T> implements InitializingBean {
 
     @SuppressWarnings("unchecked")
     private final Class<T> msgType =
@@ -40,11 +40,11 @@ public abstract class RocketMQConsumer<T> {
     @Value("${spring.rocketmq.name-server}")
     private String nameServer;
 
-    @Resource
+    @Autowired
     private Tracer tracer;
 
-    @PostConstruct
-    public void onInit() throws MQClientException {
+    @Override
+    public void afterPropertiesSet() throws MQClientException {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(group(), true);
         consumer.setNamesrvAddr(nameServer);
 

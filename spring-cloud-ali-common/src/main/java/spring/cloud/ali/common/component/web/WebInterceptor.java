@@ -7,16 +7,15 @@ import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowException;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.nacos.shaded.com.google.common.base.Strings;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.util.pattern.PathPattern;
 import spring.cloud.ali.common.component.sentinel.SentinelServiceRules;
 import spring.cloud.ali.common.util.WebUtil;
-
-import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 
@@ -36,7 +35,7 @@ public class WebInterceptor implements HandlerInterceptor {
     @Value("${spring.application.name}")
     private String appName;
 
-    @Resource
+    @Autowired
     private SentinelServiceRules sentinelServiceRules;
 
     @Override

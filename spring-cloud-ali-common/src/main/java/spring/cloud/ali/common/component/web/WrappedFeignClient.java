@@ -15,6 +15,7 @@ import feign.RequestTemplate;
 import feign.Response;
 import feign.Util;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.CollectionUtils;
@@ -28,7 +29,6 @@ import spring.cloud.ali.common.exception.SystemException;
 import spring.cloud.ali.common.util.JsonUtil;
 import spring.cloud.ali.common.util.WebUtil;
 
-import javax.annotation.Resource;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -55,7 +55,7 @@ public class WrappedFeignClient implements Client {
     @Value("${spring.application.name}")
     private String appName;
 
-    @Resource
+    @Autowired
     private SentinelServiceRules sentinelServiceRules;
 
     private final Client delegate;

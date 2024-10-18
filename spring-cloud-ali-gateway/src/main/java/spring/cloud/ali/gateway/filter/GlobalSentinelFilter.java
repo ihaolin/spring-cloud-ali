@@ -15,6 +15,7 @@ import com.alibaba.nacos.shaded.com.google.common.base.Throwables;
 import com.alibaba.nacos.shaded.com.google.common.collect.Maps;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cloud.context.environment.EnvironmentChangeEvent;
@@ -39,7 +40,6 @@ import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.util.WebUtil;
 import spring.cloud.ali.gateway.config.SpringCloudGatewayConfig;
 
-import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
@@ -69,10 +69,10 @@ public class GlobalSentinelFilter implements GlobalFilter {
     @Value("${spring.application.name}")
     private String appName;
 
-    @Resource
+    @Autowired
     private SpringCloudGatewayConfig gatewayConfig;
 
-    @Resource
+    @Autowired
     private SentinelConfigService sentinelConfigService;
 
     private final Map<String, RouteAppRules> allAppRules = Maps.newConcurrentMap();
@@ -129,7 +129,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
 
                         if (e instanceof ResponseStatusException){
                             ResponseStatusException rse = (ResponseStatusException) e;
-                            if (HttpRespStatus.isServiceUnAvailable(rse.getStatus())){
+                            if (HttpRespStatus.isServiceUnAvailable(rse.getStatusCode().value())){
                                 // 异常埋点统计
                                 ContextUtil.runOnContext(ctxSentinelContext, () -> Tracer.traceEntry(e, ctxEntry));
                                 log.warn("resource {} isn't available, trace entry: {}", resource, ctxEntry);

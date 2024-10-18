@@ -6,6 +6,7 @@ import com.google.common.base.Strings;
 import io.jsonwebtoken.Claims;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import spring.cloud.ali.common.util.JsonUtil;
@@ -18,7 +19,6 @@ import spring.cloud.ali.user.result.UserLoginResult;
 import spring.cloud.ali.user.result.VerifyTokenResult;
 import spring.cloud.ali.user.service.UserService;
 
-import javax.annotation.Resource;
 import java.util.Date;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -30,16 +30,16 @@ import static spring.cloud.ali.user.result.VerifyTokenResult.NOT_PASS;
 @Service
 public class UserServiceImpl implements UserService {
 
-    @Resource
+    @Autowired
     private UserMapper userMapper;
 
-    @Resource
+    @Autowired
     private RedisTemplate<String, Object> redisTemplate;
 
-    @Resource
+    @Autowired
     private AppConfig appConfig;
 
-    @Resource
+    @Autowired
     private MeterRegistry meterRegistry;
 
     @Override

@@ -1,6 +1,7 @@
 package spring.cloud.ali.order.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,13 +14,11 @@ import spring.cloud.ali.order.request.CreateOrderRequest;
 import spring.cloud.ali.order.result.OrderDetailResult;
 import spring.cloud.ali.order.service.OrderService;
 
-import javax.annotation.Resource;
-
 @RestController
 @RequestMapping("/orders")
 public class OrderController {
 
-    @Resource
+    @Autowired
     private OrderService orderService;
 
     @PostMapping("/create")

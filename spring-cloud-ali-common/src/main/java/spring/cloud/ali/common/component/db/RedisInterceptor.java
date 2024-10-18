@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
 import org.springframework.aop.framework.ProxyFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.util.pattern.PathPattern;
 import spring.cloud.ali.common.component.sentinel.SentinelServiceRules;
@@ -19,7 +20,6 @@ import spring.cloud.ali.common.util.WebUtil;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.annotation.Resource;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +36,7 @@ public class RedisInterceptor implements MethodInterceptor {
     @Value("${spring.application.name}")
     private String appName;
 
-    @Resource
+    @Autowired
     private SentinelServiceRules sentinelServiceRules;
 
     @Nullable

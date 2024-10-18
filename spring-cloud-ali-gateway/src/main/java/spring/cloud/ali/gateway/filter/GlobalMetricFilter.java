@@ -45,7 +45,7 @@ public class GlobalMetricFilter implements GlobalFilter {
         return chain.filter(exchange).doOnTerminate(() -> {
             long duration = System.currentTimeMillis() - startTime;
             String uri = exchange.getRequest().getURI().getPath();
-            String method = exchange.getRequest().getMethodValue();
+            String method = exchange.getRequest().getMethod().name();
 
             // 计数
             meterRegistry.counter(

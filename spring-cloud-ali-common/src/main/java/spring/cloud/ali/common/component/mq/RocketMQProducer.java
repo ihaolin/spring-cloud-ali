@@ -8,11 +8,11 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.common.message.Message;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import spring.cloud.ali.common.util.JsonUtil;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 
 import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SAMPLED;
@@ -20,7 +20,7 @@ import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_SPAN
 import static spring.cloud.ali.common.config.RocketMQConfig.USER_PROP_BRAVE_TRACE_ID;
 
 @Slf4j
-public class RocketMQProducer {
+public class RocketMQProducer implements InitializingBean {
 
     @Value("${spring.rocketmq.name-server}")
     private String nameServer;
@@ -30,11 +30,11 @@ public class RocketMQProducer {
 
     private DefaultMQProducer delegate;
 
-    @Resource
+    @Autowired
     private Tracer tracer;
 
-    @PostConstruct
-    public void onInit() throws MQClientException {
+    @Override
+    public void afterPropertiesSet() throws MQClientException {
         DefaultMQProducer producer = new DefaultMQProducer(producerGroup, true);
         producer.setNamesrvAddr(nameServer);
         producer.start();

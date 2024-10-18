@@ -5,6 +5,7 @@ import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -20,7 +21,6 @@ import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.user.result.VerifyTokenResult;
 
-import javax.annotation.Resource;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
@@ -32,7 +32,7 @@ import static spring.cloud.ali.common.enums.HttpRespStatus.HTTP_NOT_AUTH;
 @Component
 public class RouteLoginFilter extends AbstractGatewayFilterFactory<RouteLoginFilter.Config> {
 
-    @Resource
+    @Autowired
     private HttpWebFluxClient httpWebFluxClient;
 
     public RouteLoginFilter() {

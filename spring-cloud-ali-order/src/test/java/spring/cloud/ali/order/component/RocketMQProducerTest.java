@@ -1,18 +1,17 @@
 package spring.cloud.ali.order.component;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import spring.cloud.ali.common.component.mq.RocketMQProducer;
 import spring.cloud.ali.order.mq.OrderMessage;
-
-import javax.annotation.Resource;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
 public class RocketMQProducerTest {
 
-    @Resource
+    @Autowired
     private RocketMQProducer producer;
 
     @Test

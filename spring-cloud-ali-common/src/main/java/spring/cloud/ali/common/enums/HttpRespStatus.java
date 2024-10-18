@@ -2,6 +2,7 @@ package spring.cloud.ali.common.enums;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import spring.cloud.ali.common.dto.HttpResult;
 import spring.cloud.ali.common.exception.BizException;
 import spring.cloud.ali.common.util.JsonUtil;
@@ -39,19 +40,19 @@ public enum HttpRespStatus {
 
     DEFAULT(INTERNAL_SERVER_ERROR, json(SERVER_INTERNAL_ERROR), true);
 
-    HttpRespStatus(HttpStatus status, String msg, boolean serviceUnAvailable) {
+    HttpRespStatus(HttpStatusCode status, String msg, boolean serviceUnAvailable) {
         this.status = status;
         this.msg = msg;
         this.serviceUnAvailable = serviceUnAvailable;
     }
 
-    private final HttpStatus status;
+    private final HttpStatusCode status;
 
     private final String msg;
 
     private final boolean serviceUnAvailable;
 
-    private static final Map<HttpStatus, HttpRespStatus> MAPPING;
+    private static final Map<HttpStatusCode, HttpRespStatus> MAPPING;
     static {
         MAPPING = new HashMap<>();
         for (HttpRespStatus s : values()){
@@ -59,7 +60,7 @@ public enum HttpRespStatus {
         }
     }
 
-    public static HttpRespStatus get(HttpStatus status){
+    public static HttpRespStatus get(HttpStatusCode status){
         HttpRespStatus s = MAPPING.get(status);
         if (s == null){
             return DEFAULT;

@@ -4,11 +4,10 @@ import com.alibaba.csp.sentinel.slots.block.degrade.DegradeRule;
 import com.alibaba.csp.sentinel.slots.block.flow.FlowRule;
 import com.alibaba.nacos.api.exception.NacosException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
-
-import javax.annotation.Resource;
 
 import java.util.Collections;
 import java.util.List;
@@ -27,7 +26,7 @@ public class SentinelServiceRules {
     @Value("${spring.application.name}")
     private String appName;
 
-    @Resource
+    @Autowired
     private SentinelConfigService sentinelConfigService;
 
     private volatile Map<String, FlowRule> flowRuleMap = Collections.emptyMap();

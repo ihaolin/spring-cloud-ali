@@ -1,18 +1,17 @@
 package spring.cloud.ali.common.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import spring.cloud.ali.common.component.web.LoginInterceptor;
 import spring.cloud.ali.common.component.web.WebInterceptor;
 
-import javax.annotation.Resource;
-
 public class WebConfig implements WebMvcConfigurer {
 
-    @Resource
+    @Autowired
     private WebInterceptor webInterceptor;
 
-    @Resource
+    @Autowired
     private LoginInterceptor loginInterceptor;
 
     @Override

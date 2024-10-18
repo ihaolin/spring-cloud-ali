@@ -1,5 +1,6 @@
 package spring.cloud.ali.common.component.web;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.core.ParameterizedTypeReference;
@@ -7,8 +8,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 import spring.cloud.ali.common.dto.HttpResult;
-
-import javax.annotation.Resource;
 
 import java.util.Collections;
 import java.util.Map;
@@ -23,10 +22,10 @@ public class HttpWebClient {
 
     private static final String HTTP = "http:";
 
-    @Resource
+    @Autowired
     private LoadBalancerClient client;
 
-    @Resource
+    @Autowired
     private RestTemplate restTemplate;
 
     public <T> HttpResult<T> get(

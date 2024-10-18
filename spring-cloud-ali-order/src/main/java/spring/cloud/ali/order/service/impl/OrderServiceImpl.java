@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import spring.cloud.ali.common.component.mq.RocketMQProducer;
 import spring.cloud.ali.common.context.LoginUser;
@@ -18,25 +19,21 @@ import spring.cloud.ali.order.service.OrderService;
 import spring.cloud.ali.user.api.UserHttpService;
 import spring.cloud.ali.user.result.UserDetailResult;
 
-import javax.annotation.Resource;
-
-import static spring.cloud.ali.common.exception.BizException.throwBizException;
 import static spring.cloud.ali.common.exception.BizException.throwDataNotFound;
-import static spring.cloud.ali.common.exception.BizException.throwRespDataError;
 
 @Service
 public class OrderServiceImpl implements OrderService {
 
-    @Resource
+    @Autowired
     private OrderMapper orderMapper;
 
-    @Resource
+    @Autowired
     private UserHttpService userHttpService;
 
-    @Resource
+    @Autowired
     private RocketMQProducer producer;
 
-    @Resource
+    @Autowired
     private AppConfig appConfig;
 
     @Override

@@ -52,11 +52,11 @@ public class GatewayExceptionHandler implements WebExceptionHandler {
 
         if (e instanceof ResponseStatusException){
             ResponseStatusException respExp = (ResponseStatusException) e;
-            if(HttpRespStatus.isServiceUnAvailable(respExp.getStatus())){
+            if(HttpRespStatus.isServiceUnAvailable(respExp.getStatusCode().value())){
                 // 服务不可用异常，向上抛出
                 return Mono.error(e);
             }
-            HttpRespStatus respStatus = HttpRespStatus.get(respExp.getStatus());
+            HttpRespStatus respStatus = HttpRespStatus.get(respExp.getStatusCode());
             resp.setStatusCode(respStatus.getStatus());
             msg = respStatus.getMsg();
         }

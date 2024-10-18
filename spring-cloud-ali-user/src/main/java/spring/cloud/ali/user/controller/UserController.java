@@ -1,5 +1,6 @@
 package spring.cloud.ali.user.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -12,13 +13,11 @@ import spring.cloud.ali.user.result.UserLoginResult;
 import spring.cloud.ali.user.result.VerifyTokenResult;
 import spring.cloud.ali.user.service.UserService;
 
-import javax.annotation.Resource;
-
 @RestController
 @RequestMapping("/users")
 public class UserController {
 
-    @Resource
+    @Autowired
     private UserService userService;
 
     @GetMapping(value = "/login")
