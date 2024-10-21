@@ -12,6 +12,12 @@ spring:
     throw-exception-if-no-handler-found: true
   cloud:
     gateway:
+      openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 5001
       routes:
         - id: ali-user
           uri: lb://ali-user
@@ -33,22 +39,15 @@ spring:
         namespace: _sentinel_
       transport:
         dashboard: localhost:8010
-        port: 18888
-  zipkin:
-    base-url: http://localhost:9411
-  sleuth:
-    sampler:
-      probability: 1.0
-
-# feign配置    
-feign:          
-  client:
-    config:
-      default:   # 默认设置，也可通过name区分配置
-        connectTimeout: 5000  
-        readTimeout: 5000
+        port: 18888 
 
 management:
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:

@@ -506,7 +506,7 @@ public interface UserHttpService {
          - targets: ["localhost:8002"]
    ```
 
-4. 确保启动`grafana`后，并配置`prometheus`数据源后，便可配置Dashboard和Panel，可参考该配置文件[grafana-ali-gateway-dashboard.json](doc/grafana-ali-gateway-dashboard.json)（建议先统一监控模板规则，应用到不同微服务即可）
+4. 确保启动`grafana`后，并配置`prometheus`数据源后，便可配置Dashboard和Panel，可参考该配置文件[grafana-ali-gateway-dashboard.json](grafana_example/grafana-ali-gateway-dashboard.json)（建议先统一监控模板规则，应用到不同微服务即可）
 
 5. 对于自定义指标，只需注入`MeterRegistry`进行指标统计，可参考[GlobalMetricFilter](spring-cloud-ali-gateway/src/main/java/spring/cloud/ali/gateway/filter/GlobalMetricFilter.java)。
 

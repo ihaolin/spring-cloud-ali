@@ -1,5 +1,6 @@
 user:
   login-sign-key: r3q1T3YkRk6xZG0w5zCm5QxeXKl69l2j
+  test: 123456
   
 spring:
   cloud:
@@ -10,3 +11,4 @@ spring:
   rocketmq:
     producer:
       group: ali-user-producer-grp
+

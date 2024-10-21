@@ -25,11 +25,6 @@ spring:
     password: redis
   rocketmq:
     name-server: 127.0.0.1:9876
-  zipkin:
-    base-url: http://localhost:9411
-  sleuth:
-    sampler:
-      probability: 1.0
 
 # Mybatis-Plus配置
 mybatis-plus:     
@@ -51,6 +46,12 @@ feign:
         readTimeout: 5000
 
 management:
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+  tracing:
+    sampling:
+      probability: 1.0
   endpoints:
     web:
       exposure:
