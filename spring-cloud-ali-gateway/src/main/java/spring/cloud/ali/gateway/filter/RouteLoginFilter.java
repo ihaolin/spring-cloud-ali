@@ -44,7 +44,6 @@ public class RouteLoginFilter extends AbstractGatewayFilterFactory<RouteLoginFil
         return (exchange, chain) -> {
 
             ServerHttpRequest req = exchange.getRequest();
-            assert req.getMethod() != null;
 
             String reqUri = req.getMethod().name() + "#" + req.getURI().getPath();
             if (config.getExcludes() != null && config.getExcludes().contains(reqUri)) {

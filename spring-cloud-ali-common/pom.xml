@@ -55,6 +55,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-openfeign-core</artifactId>
             <scope>provided</scope>
@@ -82,6 +88,8 @@
             <artifactId>rocketmq-spring-boot-starter</artifactId>
             <scope>provided</scope>
         </dependency>
+
+
 
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

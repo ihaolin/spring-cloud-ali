@@ -38,7 +38,7 @@ import reactor.core.publisher.Mono;
 import spring.cloud.ali.common.component.sentinel.SentinelConfigService;
 import spring.cloud.ali.common.enums.HttpRespStatus;
 import spring.cloud.ali.common.util.WebUtil;
-import spring.cloud.ali.gateway.config.SpringCloudGatewayConfig;
+import spring.cloud.ali.gateway.config.GatewayConfig;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -70,7 +70,7 @@ public class GlobalSentinelFilter implements GlobalFilter {
     private String appName;
 
     @Autowired
-    private SpringCloudGatewayConfig gatewayConfig;
+    private GatewayConfig gatewayConfig;
 
     @Autowired
     private SentinelConfigService sentinelConfigService;

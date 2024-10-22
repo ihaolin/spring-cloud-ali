@@ -15,7 +15,7 @@ import java.util.List;
 @RefreshScope
 @ConfigurationProperties(prefix = "spring.cloud.gateway")
 @Component
-public class SpringCloudGatewayConfig {
+public class GatewayConfig {
 
     private List<RouteDefinition> routes;
 }
