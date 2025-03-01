@@ -1,12 +1,9 @@
 package spring.cloud.ali.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import spring.cloud.ali.common.exception.BizException;
-
-import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
